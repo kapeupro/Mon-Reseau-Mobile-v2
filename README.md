@@ -11,7 +11,6 @@
 
 [Accéder au service](https://monreseaumobile.arcep.fr/) ·
 [Signaler un bug](../../issues) ·
-[Contribuer](#-contribuer)
 
 </div>
 
@@ -87,9 +86,9 @@ disponibles par opérateur et par technologie (2G / 3G / 4G) :
 
 ## 🖼️ Captures et démonstration
 
-| Couverture mobile | Qualité de service | Antennes et déploiements |
+| Couverture mobile | Qualité de service | Antennes et déploiements | Zones à couvrir | Signalements |
 | :---: | :---: | :---: |
-| <img src="docs/coverage.png" alt="Carte de couverture mobile" width="250"> | <img src="docs/qos.png" alt="Qualité de service" width="250"> | <img src="docs/antenna.png" alt="Antennes et déploiements" width="250"> |
+| <img src="docs/coverage.png" alt="Carte de couverture mobile" width="250"> | <img src="docs/qos.png" alt="Qualité de service" width="250"> | <img src="docs/antenna.png" alt="Antennes et déploiements" width="250"> | <img src="docs/zac.png" alt="Zones à couvrir" width="250"> | <img src="docs/signalements.png" alt="Signalements" width="250"> | 
 
 Démonstration en ligne : **<https://monreseaumobile.arcep.fr/>**
 
@@ -119,7 +118,7 @@ Les jeux de données sont, sauf mention contraire, publiés sous **Licence Ouver
 
 ---
 
-<img src="docs/stack.png" alt="Architecture" width="250">
+<img src="docs/stack.png" alt="Architecture">
 
 ---
 
