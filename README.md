@@ -183,7 +183,7 @@ Néanmoins, des failles peuvent subsister.
 - **Données partenaires** : Collectivités territoriales, Speedchecker, Ookla (liste non-exhaustive)
 - **Service en ligne** : <https://monreseaumobile.arcep.fr/>
 - **Page d'information** :
-  [arcep.fr — « Mon réseau mobile »](https://www.arcep.fr/mes-demarches-et-services/consommateurs/fiches-pratiques/comment-utiliser-mon-reseau-mobile.html)
+  [Comment utiliser « Mon réseau mobile » ?](https://www.arcep.fr/mes-demarches-et-services/consommateurs/fiches-pratiques/comment-utiliser-mon-reseau-mobile.html)
 - **Contact** : <https://www.arcep.fr/nous-contacter.html>
 
 <div align="center">
