@@ -86,11 +86,32 @@ disponibles par opérateur et par technologie (2G / 3G / 4G) :
 
 ## 🖼️ Captures et démonstration
 
-| Couverture mobile | Qualité de service | Antennes et déploiements | Zones à couvrir | Signalements |
-| :---: | :---: | :---: | :---: | :---: |
-| <img src="docs/coverage.png" alt="Carte de couverture mobile par opérateur" width="150"> | <img src="docs/qos.png" alt="Tests de qualité de service" width="150"> | <img src="docs/antenna.png" alt="Antennes et déploiements 4G/5G" width="150"> | <img src="docs/zac.png" alt="Zones à couvrir du dispositif de couverture ciblée" width="150"> | <img src="docs/signalements.png" alt="Signalements J'alerte l'Arcep" width="150"> |
+<table style="width:100%; table-layout:fixed">
+  <tr>
+    <th>Couverture mobile</th>
+    <th>Qualité de service</th>
+    <th>Antennes et déploiements</th>
+    <th>Zones à couvrir</th>
+    <th>Signalements</th>
+  </tr>
+  <tr>
+    <td><img src="docs/coverage.png" alt="Carte de couverture mobile par opérateur" width="100%"></td>
+    <td><img src="docs/qos.png" alt="Tests de qualité de service" width="100%"></td>
+    <td><img src="docs/antenna.png" alt="Antennes et déploiements 4G/5G" width="100%"></td>
+    <td><img src="docs/zac.png" alt="Zones à couvrir du dispositif de couverture ciblée" width="100%"></td>
+    <td><img src="docs/signalements.png" alt="Signalements J'alerte l'Arcep" width="100%"></td>
+  </tr>
+  <tr>
+    <td align="center">Voix/SMS et Internet</td>
+    <td align="center">Mesures terrain Arcep</td>
+    <td align="center">Sites par technologie</td>
+    <td align="center"><em>New Deal</em> mobile</td>
+    <td align="center">« J'alerte l'Arcep »</td>
+  </tr>
+</table>
 
-Accéder à l'application : **<https://monreseaumobile.arcep.fr/>**
+Accéder à l'application : **<https://monreseaumobile.arcep.fr/>**  
+Démonstration de l'application : _à venir_
 
 ---
 
@@ -106,8 +127,6 @@ opérateurs. Les principales sources publiques réutilisables sont :
 | Antennes et déploiements | Arcep / ANFR | [data.arcep.fr](https://data.arcep.fr/mobile/sites/) · [data.gouv](https://www.data.gouv.fr/datasets/donnees-sur-les-installations-radioelectriques-de-plus-de-5-watts-1) |
 | Zones à couvrir | Arcep / Gouvernement | [data.arcep.fr](https://data.arcep.fr/mobile/dispositif_couverture_ciblee/) |
 | Signalements consommateurs | Arcep (« J'alerte l'Arcep ») | Non disponibles |
-
-<!-- À adapter : remplacez par les URLs exactes des jeux de données effectivement consommés -->
 
 Les jeux de données sont, sauf mention contraire, publiés sous **Licence Ouverte / Open Licence 1.0**
 (Etalab). Vérifiez la licence propre à chaque jeu de données avant toute réutilisation.
