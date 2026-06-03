@@ -1,0 +1,314 @@
+{% extends "base.html" %} {% block title %} Page signalements {% endblock %}
+<style>
+    body.loading {
+        pointer-events: none;
+    }
+</style>
+{% block content %} {% load static %}
+<script src="{% static 'signalements.js' %}"></script>
+
+<!-- Modal -->
+<div
+    class="modal fade"
+    id="loadingModal"
+    tabindex="-1"
+>
+    <div
+        class="modal-dialog modal-lg"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5
+                    class="modal-title"
+                    id="loadingModalLabel"
+                >
+                    Import
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div id="progressbar">
+                    <div
+                        class="progress-label"
+                        style="left: 40.5%"
+                    >
+                        Chargement en cours...
+                    </div>
+                </div>
+                <div
+                    class="mt-1"
+                    id="message_loading"
+                    style="max-height: 500px; overflow: auto"
+                ></div>
+            </div>
+            <div class="modal-footer modalFooter">
+                <button
+                    type="button"
+                    class="btn btn-secondary w-25"
+                    id="closeModal"
+                >
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div
+    class="modal"
+    id="messageModal"
+    tabindex="-1"
+>
+    <div
+        class="modal-dialog modal-lg"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-body">
+                <div id="labelMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal upload -->
+<div
+    class="modal fade"
+    id="uploadModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="uploadModalLabel"
+    aria-hidden="true"
+>
+    <div
+        class="modal-dialog"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5
+                    class="modal-title"
+                    id="uploadModalLabel"
+                >
+                    Ajouter un ou plusieur fichier(s)
+                </h5>
+                <button
+                    type="button"
+                    class="close"
+                    data-dismiss="modal"
+                    aria-label="Close"
+                >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div
+                class="modal-body"
+                id="modal-body-content"
+            >
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-dismiss="modal"
+                >
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Modal -->
+
+<div class="">
+    <h3 class="text-primary">
+        Signalements
+        <em
+            class="bi bi-info-circle-fill info_button_signalements"
+            style="cursor: pointer"
+        ></em>
+    </h3>
+    <div class="row">
+        <div class="col-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data %}
+                    <h4>
+                        <strong>Liste de fichiers dans le dossier</strong>
+                        <span
+                            class=""
+                            style="font-weight: 100; font-size: 17px"
+                            >{{ folder }}</span
+                        >
+                    </h4>
+                    <div>
+                        <table
+                            id="fileTable"
+                            data-order='[[ 0, "asc" ]]'
+                        >
+                            <thead>
+                                <tr class="bg-light">
+                                    <th>Nom du fichier</th>
+                                    <th data-orderable="false">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <div
+                                    id="errorSectionSignalements"
+                                    class="alert alert-danger"
+                                    style="position: relative; display: none"
+                                >
+                                    <span
+                                        class="closeErrorMsg"
+                                        aria-hidden="true"
+                                        style="
+                                            cursor: pointer;
+                                            position: absolute;
+                                            top: 50%;
+                                            right: 10px;
+                                            transform: translateY(-50%);
+                                            font-size: 24px;
+                                        "
+                                        >&times;</span
+                                    >
+                                    <div id="errorMsg"></div>
+                                </div>
+                                {% for elt in data %}
+                                <tr>
+                                    <td>{{ elt }}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_fileSignalements"
+                                            title="Supprimer le fichier dans le dossier"
+                                            data-url="{% url 'delete_file' data_type='signalements' file_name=elt %}"
+                                        >
+                                            <em class="bi bi-trash"></em>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_Signalements"
+                                            title="importer le fichier dans la base"
+                                            data-import-type="Signalements"
+                                            data-filename="{{ elt }}"
+                                        >
+                                            <em
+                                                class="bi bi-database-fill-add"
+                                            ></em>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier source trouvé</strong> pour
+                            signalements dans {{ folder }}
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex flex-row justify-content-between mt-3">
+                        <div>
+                            <a
+                                id="upload-btn-Signalements"
+                                type="button"
+                                class="btn btn-success rounded-pill shadow mr-4"
+                                href="{% url 'upload' 'signalements' %}"
+                            >
+                                Ajouter un fichier
+                            </a>
+                            <button
+                                id="importButtonSignalements"
+                                data-url="{% url 'import_db' 'signalements' %}"
+                                type="button"
+                                class="btn btn-warning rounded-pill shadow"
+                            >
+                                Importer db
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_db %}
+                    <h4>
+                        <strong
+                            >Liste de fichiers dans la base de données</strong
+                        >
+                    </h4>
+                    <div>
+                        <table
+                            id="tableBd"
+                            data-order='[[ 1, "asc" ]]'
+                        >
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th
+                                        scope="col"
+                                        data-orderable="false"
+                                    >
+                                        Action
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_db %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bdSignalements"
+                                            title="Supprimer dans la base de données"
+                                            data-url="{% url 'delete_file_db' data_type='signalements' file_name=elt.filename %}"
+                                        >
+                                            <em class="bi bi-trash"></em>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_Signalements"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name }}"
+                            data-type="signalements"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong
+                                >Aucun fichier trouvé dans la base de
+                                données</strong
+                            >
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

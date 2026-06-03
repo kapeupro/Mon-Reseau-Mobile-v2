@@ -1,0 +1,768 @@
+{% extends "base.html" %} {% block title %} Page ZaC {% endblock %}
+<style>
+
+    /* #loadingModal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    } */
+
+    body.loading {
+        pointer-events: none;
+    }
+</style>
+{% block content %}
+{% load static %}
+<script src="{% static 'zac.js' %}"></script>
+
+<!-- Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loadingModalLabel">Import</h5>
+            </div>
+            <div class="modal-body">
+                <div id="progressbar" ><div class="progress-label" style="left:40.5%;">Chargement en cours...</div></div>
+                <div class='mt-1' id="message_loading" style="max-height: 500px; overflow: auto;"></div>
+            </div>
+            <div class="modal-footer modalFooter">
+                <button
+                    type="button"
+                    class="btn btn-secondary w-25"
+                    id="closeModal"
+                >
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div id="labelMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+ <!-- Modal upload -->
+ <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">Ajouter un ou plusieur fichier(s)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Modal -->
+
+<h3 class="text-primary">
+    ZaC POI
+    <em class="bi bi-info-circle-fill info_button_zac_poi" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_zac_poi %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong> 
+                    <span class="" style="font-weight: 100; font-size: 17px">{{ folder_zac_poi }}</span>
+                </h4>
+                <div>
+                    <table id="fileTableZacPoi" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionzac_poi" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsgzac_poi" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgzac_poi"></div>
+                            </div>
+                            {% for elt in data_zac_poi %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button type="button" 
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_zac_poi" 
+                                        title="Supprimer le fichier dans le dossier" 
+                                        data-url="{% url 'delete_file' data_type='zac_poi' file_name=elt %}">
+                                        <em class="bi bi-trash"></em>
+                                        </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_zac_poi" 
+                                        data-import-type="zac_poi" 
+                                        title="importer le fichier dans la base" 
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em class="bi bi-database-fill-add"></em>
+                                        </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour points à couvrir dans {{ folder_zac_poi }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <div class="flex mt-2">
+                    <a type="button" 
+                        id="upload-btn-zac_poi"
+                        class="btn btn-success rounded-pill shadow  mr-4" 
+                        href="{% url 'upload' 'zac_poi' %}">
+                        Ajouter un fichier
+                    </a>
+                    <button id="importButton_zac_poi" 
+                        data-url="{% url 'import_db' 'zac_poi' %}" 
+                        type="button" 
+                        class="btn btn-warning rounded-pill shadow">
+                        Importer db
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if lst_files_zac_poi_db %}
+                <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                <div>
+                    <table id="dbTableZacPoi" data-order='[[ 1, "asc" ]]' >
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in lst_files_zac_poi_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bd_zac_poi" 
+                                        title="Supprimer dans la base de données" 
+                                        data-url="{% url 'delete_file_db' data_type='zac_poi' file_name=elt.filename %}"
+                                        data-urlop="{% url 'delete_file_db' data_type='zac_poi_operateurs' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_zac_poi"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_zac_poi }}"
+                        data-tablenameop="{{ table_name_zac_poi_operateurs }}"
+                        data-type="zac_poi"
+                        data-typeop="zac_poi_operateurs"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier trouvé dans la base de données</strong>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="text-primary mt-3">
+    ZaC Site
+    <em class="bi bi-info-circle-fill info_button_zac_site" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_zac_site %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong> 
+                    <span class="" style="font-weight: 100; font-size: 17px">{{ folder_zac_site }}</span>
+                </h4>
+                <div>
+                    <table id="fileTableZacSite" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionzac_site" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsgzac_site" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgzac_site"></div>
+                            </div>
+                            {% for elt in data_zac_site %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button type="button" 
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_zac_site" 
+                                        title="Supprimer le fichier dans le dossier" 
+                                        data-url="{% url 'delete_file' data_type='zac_site' file_name=elt %}">
+                                        <em class="bi bi-trash"></em>
+                                        </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_zac_site" 
+                                        data-import-type="zac_site" 
+                                        title="importer le fichier dans la base" 
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em class="bi bi-database-fill-add"></em>
+                                        </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour site dans {{ folder_zac_site }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <div class="flex mt-2">
+                    <a type="button" 
+                        id="upload-btn-zac_site"
+                        class="btn btn-success rounded-pill shadow  mr-4" 
+                        href="{% url 'upload' 'zac_site' %}">
+                        Ajouter un fichier
+                    </a>
+                    <button id="importButton_zac_site" 
+                        data-url="{% url 'import_db' 'zac_site' %}" 
+                        type="button" 
+                        class="btn btn-warning rounded-pill shadow">
+                        Importer db
+                    </button>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if lst_files_zac_site_db %}
+                <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                <div>
+                    <table id="dbTableZacSite" data-order='[[ 1, "asc" ]]' >
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in lst_files_zac_site_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bd_zac_site" 
+                                        title="Supprimer dans la base de données" 
+                                        data-url="{% url 'delete_file_db' data_type='zac_site' file_name=elt.filename %}"
+                                        data-urlop="{% url 'delete_file_db' data_type='zac_site_operateurs' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_zac_site"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_zac_site }}"
+                        data-tablenameop="{{ table_name_zac_site_operateurs }}"
+                        data-type="zac_site"
+                        data-typeop="zac_site_operateurs"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier trouvé dans la base de données</strong>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="text-primary mt-3">
+    Axes ferrés
+    <em class="bi bi-info-circle-fill info_button_zac_axe_ferre" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_zac_axe_ferre %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px">{{ folder_zac_axe_ferre }}</span>
+                </h4>
+                <div>
+                    <table id="fileTableZacAxeFerre" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr class="bg-light">
+                                <th>Nom du fichier</th>
+                                <th data-orderable="false">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionzac_axe_ferre" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsgzac_axe_ferre" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgzac_axe_ferre"></div>
+                            </div>
+                            {% for elt in data_zac_axe_ferre %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                <button type="button" 
+                                    class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_zac_axe_ferre" 
+                                    title="Supprimer le fichier dans le dossier" 
+                                    data-url="{% url 'delete_file' data_type='zac_rfr' file_name=elt %}"
+                                >
+                                    <em class="bi bi-trash"></em>
+                                </button>
+                                <button 
+                                    type="button" 
+                                    class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_zac_axe_ferre" 
+                                    title="importer le fichier dans la base"
+                                    data-import-type="Zac_axe_ferre"
+                                    data-filename="{{ elt }}"
+                                >
+                                    <em class="bi bi-database-fill-add"></em>
+                                </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour axes ferrés
+                        dans {{ folder_zac_axe_ferre }}
+                    </p>
+                </div>
+                {% endif %}
+                <div class="d-flex flex-row justify-content-between mt-3">
+                    <div>
+                        <a id="upload-btn-zac_rfr" type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'zac_rfr' %}">
+                            Ajouter un fichier
+                        </a>
+                        <button id="importButton_zac_axe_ferre" data-url="{% url 'import_db' 'zac_rfr' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                            Importer db
+                        </button>
+                    </div>
+                    {% comment %} <button id="consolidationzac_axe_ferre" data-url="{% url 'import_db' 'consolidation_zac_rfr' %}" type="button" class="btn btn-primary rounded-pill shadow" >
+                        Lancer la consolidation
+                    </button> {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if lst_files_zac_axe_ferre_db %}
+                <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                <div>
+                    <table id="dbTableZacAxeFerre" data-order='[[ 1, "asc" ]]'>
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col" data-orderable="false">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in lst_files_zac_axe_ferre_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button type="button" 
+                                    class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bd_zac_axe_ferre" 
+                                    title="Supprimer dans la base de données" 
+                                    data-url="{% url 'delete_file_db' data_type='zac_rfr' file_name=elt.filename %}"
+                                >
+                                    <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_zac_axe_ferre"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_zac_axe_ferre }}"
+                        data-type="zac_rfr"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier trouvé dans la base de données</strong>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="text-primary mt-3">
+    Axes routiers prioritaires
+    <em class="bi bi-info-circle-fill info_button_zac_axe_routier_prioritaire" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_zac_axe_routier_prioritaire %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px">{{ folder_zac_axe_routier_prioritaire }}</span>
+                </h4>
+                <div>
+                    <table id="fileTableZacAxeRoutierPrioritaire" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr class="bg-light">
+                                <th>Nom du fichier</th>
+                                <th data-orderable="false">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionzac_axe_routier_prioritaire" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsgzac_axe_routier_prioritaire" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgzac_axe_routier_prioritaire"></div>
+                            </div>
+                            {% for elt in data_zac_axe_routier_prioritaire %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                <button type="button" 
+                                    class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_zac_axe_routier_prioritaire" 
+                                    title="Supprimer le fichier dans le dossier" 
+                                    data-url="{% url 'delete_file' data_type='zac_arp' file_name=elt %}"
+                                >
+                                    <em class="bi bi-trash"></em>
+                                </button>
+                                <button 
+                                    type="button" 
+                                    class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_zac_axe_routier_prioritaire" 
+                                    title="importer le fichier dans la base"
+                                    data-import-type="Zac_axe_routier_prioritaire"
+                                    data-filename="{{ elt }}"
+                                >
+                                    <em class="bi bi-database-fill-add"></em>
+                                </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour axes routiers prioritaires
+                        dans {{ folder_zac_axe_routier_prioritaire }}
+                    </p>
+                </div>
+                {% endif %}
+                <div class="d-flex flex-row justify-content-between mt-3">
+                    <div>
+                        <a id="upload-btn-zac_arp" type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'zac_arp' %}">
+                            Ajouter un fichier
+                        </a>
+                        <button id="importButton_zac_axe_routier_prioritaire" data-url="{% url 'import_db' 'zac_arp' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                            Importer db
+                        </button>
+                    </div>
+                    {% comment %} <button id="consolidation_zac_axe_routier_prioritaire" data-url="{% url 'import_db' 'consolidation_zac_arp' %}" type="button" class="btn btn-primary rounded-pill shadow" >
+                        Lancer la consolidation
+                    </button> {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if lst_files_zac_axe_routier_prioritaire_db %}
+                <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                <div>
+                    <table id="dbTableZacAxeRoutierPrioritaire" data-order='[[ 1, "asc" ]]'>
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col" data-orderable="false">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in lst_files_zac_axe_routier_prioritaire_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button type="button" 
+                                    class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bd_zac_axe_routier_prioritaire" 
+                                    title="Supprimer dans la base de données" 
+                                    data-url="{% url 'delete_file_db' data_type='zac_arp' file_name=elt.filename %}"
+                                >
+                                    <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_zac_axe_routier_prioritaire"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_zac_axe_routier_prioritaire }}"
+                        data-type="zac_arp"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier trouvé dans la base de données</strong>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="text-primary mt-3">
+    Axes routiers prioritaires 5G
+    <em class="bi bi-info-circle-fill info_button_zac_axe_routier_prioritaire_5g" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_zac_axe_routier_prioritaire_5g %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px">{{ folder_zac_axe_routier_prioritaire_5g }}</span>
+                </h4>
+                <div>
+                    <table id="fileTableZacAxeRoutierPrioritaire5g" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr class="bg-light">
+                                <th>Nom du fichier</th>
+                                <th data-orderable="false">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionzac_axe_routier_prioritaire_5g" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsgzac_axe_routier_prioritaire_5g" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgzac_axe_routier_prioritaire_5g"></div>
+                            </div>
+                            {% for elt in data_zac_axe_routier_prioritaire_5g %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                <button type="button" 
+                                    class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_zac_axe_routier_prioritaire_5g" 
+                                    title="Supprimer le fichier dans le dossier" 
+                                    data-url="{% url 'delete_file' data_type='zac_arp_5g' file_name=elt %}"
+                                >
+                                    <em class="bi bi-trash"></em>
+                                </button>
+                                <button 
+                                    type="button" 
+                                    class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_zac_axe_routier_prioritaire_5g" 
+                                    title="importer le fichier dans la base"
+                                    data-import-type="Zac_axe_routier_prioritaire_5g"
+                                    data-filename="{{ elt }}"
+                                >
+                                    <em class="bi bi-database-fill-add"></em>
+                                </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour axes routiers prioritaires 5G
+                        dans {{ folder_zac_axe_routier_prioritaire_5g }}
+                    </p>
+                </div>
+                {% endif %}
+                <div class="d-flex flex-row justify-content-between mt-3">
+                    <div>
+                        <a id="upload-btn-zac_arp_5g" type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'zac_arp_5g' %}">
+                            Ajouter un fichier
+                        </a>
+                        <button id="importButton_zac_axe_routier_prioritaire_5g" data-url="{% url 'import_db' 'zac_arp_5g' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                            Importer db
+                        </button>
+                    </div>
+                    {% comment %} <button id="consolidation_zac_axe_routier_prioritaire_5g" data-url="{% url 'import_db' 'consolidation_zac_arp_5g' %}" type="button" class="btn btn-primary rounded-pill shadow" >
+                        Lancer la consolidation
+                    </button> {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if lst_files_zac_axe_routier_prioritaire_5g_db %}
+                <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                <div>
+                    <table id="dbTableZacAxeRoutierPrioritaire5g" data-order='[[ 1, "asc" ]]'>
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col" data-orderable="false">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in lst_files_zac_axe_routier_prioritaire_5g_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button type="button" 
+                                    class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bd_zac_axe_routier_prioritaire_5g" 
+                                    title="Supprimer dans la base de données" 
+                                    data-url="{% url 'delete_file_db' data_type='zac_arp_5g' file_name=elt.filename %}"
+                                >
+                                    <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_zac_axe_routier_prioritaire_5g"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_zac_axe_routier_prioritaire_5g }}"
+                        data-type="zac_arp_5g"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier trouvé dans la base de données</strong>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

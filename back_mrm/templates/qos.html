@@ -1,0 +1,1131 @@
+{% extends "base.html" %} {% block title %} Page QoS {% endblock %}
+<style>
+    #loadingModal {
+        display: none;
+    }
+
+    #loadingModal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    body.loading {
+        pointer-events: none;
+    }
+</style>
+{% block content %} {% load static %}
+<script src="{% static 'qos.js' %}"></script>
+<div class="modal fade" id="loadingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loadingModalLabel">Import</h5>
+            </div>
+            <div class="modal-body">
+                <div id="progressbar">
+                    <div class="progress-label" style="left:40.5%;">Chargement en cours...</div>
+                </div>
+                <div class="mt-1" id="message_loading" style="max-height: 500px; overflow: auto;"></div>
+            </div>
+            <div class="modal-footer modalFooter">
+                <button
+                    type="button"
+                    class="btn btn-secondary w-25"
+                    id="closeModal"
+                >
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div id="labelMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div
+    class="modal"
+    id="importModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="importModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">
+                    Sélectionner une option d'importation
+                </h5>
+            </div>
+            <div class="modal-body">
+                <form id="importForm">
+                    <div class="form-group">
+                        <label for="importOption">Source d'information</label>
+                        <select class="form-control" id="importOption">
+                            {% for elt in data_source %}
+                            <option value="{{elt.id}}" data-url="{% url 'get_crowd_from_source' id_data_source=elt.id %}">{{elt.title}}</option>
+                            {% endfor %}
+                        </select>
+                    </div></br>
+                    <div class="form-group">
+                        <label for="dataSourceDesc">Description de la source</label>
+                        <select class="form-control" id="dataSourceDesc"></select>
+                    </div></br>
+                    <div class="form-group row d-flex justify-content-center">
+                        <div class="col-auto">
+                            <label for="metropole">Métropole</label>
+                            <input type="radio" id="metropole" name="region" value="metropole" checked>
+                        </div>
+                        <div class="col-auto">
+                            <label for="outremer">Outremer</label>
+                            <input type="radio" id="outremer" name="region" value="outremer">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-dismiss="modal"
+                >
+                    Annuler
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="importConfirm"
+                >
+                    Importer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Modal -->
+
+<!-- Modal delete source desc -->
+<div
+    class="modal"
+    id="deleteSourceDescModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="importModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">
+                    Supprimer une description
+                </h5>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; max-height: 400px !important">
+                <div class="form-group">
+                    <label for="sourceListOption">Source d'information</label>
+                    <select class="form-control" id="sourceListOption">
+                        {% for elt in data_source %}
+                        <option value="{{elt.id}}" data-url="{% url 'get_crowd_from_source' id_data_source=elt.id %}">{{elt.title}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <br/>
+                <table id="listSourceDescToDelete" data-url="{% url 'delete_data_source_desc' %}">
+                    <thead>
+                        <tr class="bg-light">
+                            <th scope="col">Description de la source</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyListSourceDescToDelete">
+                    </tbody>
+                </table>
+                <div id="errorMessageDeleteSourceDesc"></div>
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-dismiss="modal"
+                >
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirmationSection" class="modal" style="display: none; margin-top: -10%;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <h6>Des données de la table qos pourraient être supprimés. Voulez-vous vraiment supprimer la source description?</h6>
+                <button type="button" class="btn btn-success" id="confirmDeleteButton">Oui</button>
+                <button type="button" class="btn btn-danger" id="cancelDeleteButton">Non</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Modal -->
+
+ <!-- Modal upload -->
+ <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">Ajouter un ou plusieur fichier(s)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Modal -->
+
+<h3 class="text-primary">
+    Mesure qualité
+    <em class="bi bi-info-circle-fill info_button_qos" data-url="{% static 'docs/Documentation_qos.xlsx' %}" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px">
+                        {{ folder }}
+                    </span>
+                </h4>
+                <div>
+                    <table id="fileTableQosToImport" class="table">
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSection" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsg" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsg"></div>
+                            </div>
+                            {% for elt in data %}
+                            <tr>
+                                <td>
+                                    {{ elt }}
+                                </td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_qos"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='qos' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_qos"
+                                        data-import-type="qos"
+                                        title="importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em class="bi bi-database-fill-add"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé dans : </strong> {{ folder }}
+                    </p>
+                </div>
+                {% endif %}
+                <hr/>
+                <div class="d-flex flex-row justify-content-between mt-3">
+                    <div>
+                        <a
+                            id="upload-btn-qos"
+                            type="button"
+                            class="btn btn-success rounded-pill shadow mr-4"
+                            href="{% url 'upload' 'qos' %}"
+                        >
+                            Ajouter un fichier
+                        </a>
+                        <button
+                            id="importButtonQos"
+                            data-url="{% url 'import_file_qos' %}"
+                            type="button"
+                            class="btn btn-warning rounded-pill shadow"
+                        >
+                            Importer db
+                        </button>
+                        <button
+                            id="deleteDataSourceDescButtonQos"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                        >
+                            Supprimer description source
+                        </button>
+                    </div>
+                    <div class="d-flex">
+                        <a
+                            id="consolidation_qos"
+                            type="button"
+                            class="btn btn-primary rounded-pill shadow"
+                            data-table="{{ table_name }}"
+                            data-url="{% url 'consolidation' %}"
+                        >
+                            Lancer la consolidation
+                        </a>
+                        <h3 class="text-primary">
+                            <em class="p-1 bi bi-info-circle-fill info_button_consolidation_qos" style="cursor: pointer;"></em>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_db %}
+                <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                <div>
+                    <table id="tableDb" class="table">
+                        <thead>
+                            <tr class="bg-light">
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col" data-orderable="false">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_qos"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='qos' file_name=elt.filename %}">
+                                            <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_qos"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name }}"
+                        data-type="qos"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier trouvé dans la base de données</strong>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<h3 class="text-primary mt-3">
+    Qos density
+    <em class="bi bi-info-circle-fill info_button_qos_density" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_qos_density %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px"
+                        >{{ folder_qos_density }}</span
+                    >
+                </h4>
+                <div>
+                    <table id="fileTableQosDensity" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr tr class="bg-light">
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionqos_density" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsgqos_density" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgqos_density"></div>
+                            </div>
+                            {% for elt in data_qos_density %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_qos_density"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='qos_density' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_qos_density"
+                                        data-import-type="qos_density"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour qos_density
+                        dans {{ folder_qos_density }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <a
+                    id="upload-btn-qos_density"
+                    type="button"
+                    class="btn btn-success rounded-pill shadow"
+                    href="{% url 'upload' 'qos_density' %}"
+                >
+                    Ajouter un fichier
+                </a>
+                <a
+                    id="importButtonQos_density"
+                    type="button"
+                    class="btn btn-warning rounded-pill shadow"
+                    data-url="{% url 'import_db' 'qos_density' %}"
+                >
+                    Importer Db
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_qos_density_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table id="tableDbQosDensity" class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_qos_density_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_qos_density"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='qos_density' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_qos_density"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_qos_density }}"
+                        data-type="qos_density"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="text-primary mt-3">
+    Insee density
+    <em class="bi bi-info-circle-fill info_button_insee_density" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_insee_density %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px"
+                        >{{ folder_insee_density }}</span
+                    >
+                </h4>
+                <div>
+                    <table id="fileTableInseeDensity" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr tr class="bg-light">
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectioninsee_density" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsginsee_density" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsginsee_density"></div>
+                            </div>
+                            {% for elt in data_insee_density %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_insee_density"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='insee_density' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_insee_density"
+                                        data-import-type="insee_density"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour insee_density
+                        dans {{ folder_insee_density }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <a
+                    id="upload-btn-insee_density"
+                    type="button"
+                    class="btn btn-success rounded-pill shadow"
+                    href="{% url 'upload' 'insee_density' %}"
+                >
+                    Ajouter un fichier
+                </a>
+                <a
+                    id="importButtonInsee_density"
+                    type="button"
+                    class="btn btn-warning rounded-pill shadow"
+                    data-url="{% url 'import_db' 'insee_density' %}"
+                >
+                    Importer Db
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_insee_density_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table id="tableDbInseeDensity" class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_insee_density_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_insee_density"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='insee_density' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_insee_density"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_insee_density }}"
+                        data-type="insee_density"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- <h3 class="text-primary mt-3">
+    Stat QoS Region
+    <em class="bi bi-info-circle-fill info_button_stats_qos_regions" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_stats_qos_regions %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px"
+                        >{{ folder_stats_qos_regions }}</span
+                    >
+                </h4>
+                <div>
+                    <table id="fileTableStatsQosRegions" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr tr class="bg-light">
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionstats_qos_regions" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsgstats_qos_regions" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgstats_qos_regions"></div>
+                            </div>
+                            {% for elt in data_stats_qos_regions %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_stats_qos_regions"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='stats_qos_regions' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_stats_qos_regions"
+                                        data-import-type="stats_qos_regions"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour stats_qos_regions
+                        dans {{ folder_stats_qos_regions }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <a
+                    id="upload-btn-stats_qos_regions"
+                    type="button"
+                    class="btn btn-success rounded-pill shadow"
+                    href="{% url 'upload' 'stats_qos_regions' %}"
+                >
+                    Ajouter un fichier
+                </a>
+                <a
+                    id="importButtonStats_qos_regions"
+                    type="button"
+                    class="btn btn-warning rounded-pill shadow"
+                    data-url="{% url 'import_db' 'stats_qos_regions' %}"
+                >
+                    Importer Db
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_stats_qos_regions_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table id="tableDbStatsQosRegions" class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_stats_qos_regions_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_stats_qos_regions"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='stats_qos_regions' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_stats_qos_regions"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_stats_qos_regions }}"
+                        data-type="stats_qos_regions"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<h3 class="text-primary mt-3">
+    Stat QoS Metropole
+    <em class="bi bi-info-circle-fill info_button_stats_qos_metropole" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_stats_qos_metropole %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px"
+                        >{{ folder_stats_qos_metropole }}</span
+                    >
+                </h4>
+                <div>
+                    <table id="fileTableStatsQosMetropole" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr tr class="bg-light">
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionstats_qos_metropole" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsgstats_qos_metropole" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgstats_qos_metropole"></div>
+                            </div>
+                            {% for elt in data_stats_qos_metropole %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_stats_qos_metropole"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='stats_qos_metropole' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_stats_qos_metropole"
+                                        data-import-type="stats_qos_metropole"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour stats_qos_metropole
+                        dans {{ folder_stats_qos_metropole }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <a
+                    id="upload-btn-stats_qos_metropole"
+                    type="button"
+                    class="btn btn-success rounded-pill shadow"
+                    href="{% url 'upload' 'stats_qos_metropole' %}"
+                >
+                    Ajouter un fichier
+                </a>
+                <a
+                    id="importButtonStats_qos_metropole"
+                    type="button"
+                    class="btn btn-warning rounded-pill shadow"
+                    data-url="{% url 'import_db' 'stats_qos_metropole' %}"
+                >
+                    Importer Db
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_stats_qos_metropole_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table id="tableDbStatsQosMetropole" class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_stats_qos_metropole_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_stats_qos_metropole"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='stats_qos_metropole' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_stats_qos_metropole"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_stats_qos_metropole }}"
+                        data-type="stats_qos_metropole"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div> -->
+
+
+<h3 class="text-primary mt-3">
+    QoS Stat
+    <em class="bi bi-info-circle-fill info_button_qos_stat" style="cursor: pointer;"></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_qos_stat %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span class="" style="font-weight: 100; font-size: 17px"
+                        >{{ folder_qos_stat }}</span
+                    >
+                </h4>
+                <div>
+                    <table id="fileTableQosStat" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr tr class="bg-light">
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div id="errorSectionqos_stat" class="alert alert-danger" style="position: relative; display: none;">
+                                <span class="closeErrorMsginsee_density" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                <div id="errorMsgqos_stat"></div>
+                            </div>
+                            {% for elt in data_qos_stat %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_qos_stat"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='qos_stat' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_qos_stat"
+                                        data-import-type="qos_stat"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour qos_stat
+                        dans {{ folder_qos_stat }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <a
+                    id="upload-btn-qos_stat"
+                    type="button"
+                    class="btn btn-success rounded-pill shadow"
+                    href="{% url 'upload' 'qos_stat' %}"
+                >
+                    Ajouter un fichier
+                </a>
+                <a
+                    id="importButtonQos_stat"
+                    type="button"
+                    class="btn btn-warning rounded-pill shadow"
+                    data-url="{% url 'import_db' 'qos_stat' %}"
+                >
+                    Importer Db
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_qos_stat_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table id="tableDbQosStat" class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_qos_stat_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_qos_stat"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='qos_stat' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_qos_stat"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_qos_stat }}"
+                        data-type="qos_stat"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

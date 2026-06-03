@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .dropdown {
+            display: inline-block;
+            z-index: 0;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #57a0c2;
+            min-width: 100px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 999;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-row label {
+            font-weight: bold;
+            color: black;
+        }
+    </style>
+{% endblock %}
+
+{% block nav-global %}
+    {{ block.super }}
+    <!-- <div class="dropdown">
+        <button class="dropbtn">Type d'import</button>
+        <div class="dropdown-content">
+            <a href="{%url 'couvertures' %}">Couvertures</a>
+            <a href="{%url 'sites' %}">Sites</a>
+            <a href="{%url 'qos' %}">QoS</a>
+         
+        </div>
+        
+    </div> -->
+{% endblock %}

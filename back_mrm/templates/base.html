@@ -1,0 +1,358 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% comment %}
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {% endcomment %}
+        <title>{% block title %}{% endblock %}</title>
+
+        <!-- CSS only -->
+        <style>
+            .containt {
+                font-family: "Signika", sans-serif;
+                font-optical-sizing: auto;
+                font-variation-settings: "GRAD" 0;
+            }
+            .scrollable-content {
+                overflow-y: auto;
+                height: auto;
+                overflow-x: none;
+            }
+            .card-content {
+                padding: 32px;
+            }
+            body.loading {
+                pointer-events: none;
+            }
+            #progressbar .ui-progressbar-value {
+                background-color: #ffc107;
+            }
+            .ui-progressbar {
+                position: relative;
+            }
+            .progress-label {
+                position: absolute;
+                left: 48%;
+                top: 4px;
+                font-weight: bold;
+                text-shadow: 1px 1px 0 #fff;
+            }
+            /* Styles pour la boîte de dialogue */
+            .custom-dialog {
+                background-color: #ffffff !important;
+                border: 1px solid #ccc !important;
+                border-radius: 5px !important;
+            }
+            .ui-dialog-titlebar-close:after {
+                content: "\00d7";
+                font-size: 24px;
+                color: #000;
+                position: absolute;
+                right: 1.5px;
+                top: 60%;
+                transform: translateY(-50%);
+                cursor: pointer;
+            }
+            .btn-yes {
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                padding: 7px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+
+            .btn-no {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                padding: 7px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+
+            .btn-yes:hover,
+            .btn-no:hover {
+                opacity: 0.8;
+            }
+
+            div.popover {
+                max-width: 100%;
+            }
+        </style>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+
+        <link rel="stylesheet" href="{% static 'css/jquery.dataTables.min.css' %}"/>
+        <link rel="stylesheet" href="{% static 'css/bootstrap-icons.min.css' %}"/>
+        <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+
+        <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+        <script src="{% static 'js/jquery.js' %}"></script>
+        <script src="{% static 'js/jquery-ui.js' %}"></script>
+        <script src="{% static 'js/dataTable.js' %}"></script>
+        <script src="{% static 'js/editable-select.js' %}"></script>
+        
+        <script>
+            const URL_MAJ_SITE = "{% url 'update_site' %}";
+            const URL_COPY_SCHEMA = "{% url 'copy_schema' %}";
+            const URL_IMPORT_SIGNALEMENT = "{% url 'import_signalement' %}";
+        </script>
+        <script src="{% static 'utils.js' %}"></script>
+        <script src="{% static 'base.js' %}"></script>
+        <script src="{% static 'info.js' %}"></script>
+    </head>
+    <body class="containt">
+        <div class="container-fluid pl-0">
+            <div class="row">
+                {% if "login" not in request.path_info %}
+                <!-- Sidebar -->
+                <div
+                    class="d-flex flex-column flex-shrink-0 p-3 position-fixed"
+                    style="width: 280px; height: 100vh; background-color: {% if APP_MODE == 'private' %} #F5EAEA {% else %} #f8f9fa {% endif %};"
+                >
+                    <div class="d-flex justify-content-center">
+                        <h3 class="text-primary">
+                            <a
+                                class="p-1 bi bi-file-text-fill"
+                                href="{% static 'docs/DU-backend.docx' %}"
+                                target="_blank"
+                                style="cursor: pointer"
+                                title="Documentation"
+                            ></a>
+                        </h3>
+                        <a
+                            href="{%url 'couvertures' %}"
+                            class="d-flex align-items-center mx-auto mb-md-0 me-md-auto link-dark text-decoration-none"
+                        >
+                            {% load static %}
+                            <img
+                                src="{% static 'images/arcep.png' %}"
+                                alt="logo"
+                                width="200"
+                            />
+
+                        </a>
+                    </div>
+                    <hr />
+                    <div  class="overflow-auto" style="scrollbar-width: none; overflow: hidden;">
+                        <ul class="nav nav-pills flex-column mb-auto">
+                            <li class="nav-item">
+                                <a
+                                    href="{%url 'couvertures' %}"
+                                    class="nav-link {% if 'import_couvertures' in request.path_info %}active{% endif %}"
+                                    aria-current="page"
+                                >
+                                    Couvertures
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="{%url 'sites' %}"
+                                    class="nav-link {% if 'import_sites' in request.path_info %}active{% endif %}"
+                                >
+                                    Sites
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="{%url 'qos' %}"
+                                    class="nav-link {% if 'import_qos' in request.path_info %}active{% endif %}"
+                                >
+                                    QoS
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="{%url 'zac' %}"
+                                    class="nav-link {% if 'import_zac' in request.path_info %}active{% endif %}"
+                                >
+                                    Zac
+                                </a>
+                            </li>
+                            {% if APP_MODE == "private" %}
+                            <li>
+                                <a
+                                    href="/admin/"
+                                    target="_blink"
+                                    class="nav-link link-dark"
+                                >
+                                    Admin
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="/admin/back_mrm/operateur/"
+                                    target="_blink"
+                                    class="nav-link link-dark"
+                                >
+                                    Operateur
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="/admin/back_mrm/importlog/"
+                                    target="_blink"
+                                    class="nav-link link-dark"
+                                >
+                                    Import Log
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="/admin/back_mrm/datasourcelist/"
+                                    target="_blink"
+                                    class="nav-link link-dark"
+                                >
+                                    Data source
+                                </a>
+                            </li>
+                            {% endif %}
+                            <hr />
+                            <div class="d-flex justify-content-center p-1">
+                                <h3 class="text-primary">
+                                    <em
+                                        class="p-1 bi bi-info-circle-fill info_button_maintenance_site"
+                                        style="cursor: pointer"
+                                    ></em>
+                                </h3>
+                                <a
+                                    class="btn btn-success rounded-pill shadow"
+                                    id="update-site-btn"
+                                    style="cursor: pointer;"
+                                    >MAJ des sites en maint.</a
+                                >
+                            </div>
+                            <input class="datepicker" readonly>
+                            <hr />
+                            <div class="d-flex justify-content-center">
+                                <h3 class="text-primary">
+                                    <a
+                                        class="p-1 bi bi-info-circle-fill info_button_signalements"
+                                        data-folder="{{ folder_signalements}}"
+                                        style="cursor: pointer"
+                                    ></a>
+                                </h3>
+                                <a
+                                    class="btn btn-success rounded-pill shadow"
+                                    id="btn-import-signalement"
+                                    style="cursor: pointer;"
+                                    >MAJ des signalements</a
+                                >
+                            </div>
+
+                            <hr />
+                            <div class="d-flex justify-content-center p-1">
+                                <h3 class="text-primary">
+                                    <em
+                                        class="p-1 bi bi-info-circle-fill info_button_copy_schema"
+                                        style="cursor: pointer"
+                                    ></em>
+                                </h3>
+                                <a
+                                    class="btn btn-success rounded-pill shadow"
+                                    id="copy_schema_btn"
+                                    style="cursor: pointer;"
+                                    >Copier schéma</a
+                                >
+                            </div>
+                            <div class="d-flex flex-column gap-2">
+                                <input id="schema_private" type="text" value="{{ PRIVATE_SCHEMA }}" placeholder="Schéma privé" />
+                                <input id="schema_public" type="text" value="{{ PUBLIC_SCHEMA }}" placeholder="Schéma public" />
+                            </div>
+                        </ul>
+                    </div>
+                    <hr />
+                    <a
+                        href="{%url 'logout' %}"
+                        class="d-flex align-items-center link-dark text-primary mx-auto text-decoration-none"
+                        id="dropdownUser2"
+                        aria-expanded="false"
+                    >
+                        <em class="fas fa-sign-out-alt mr-1"></em>
+                        <strong>Déconnexion</strong>
+                    </a>
+                </div>
+                {% endif %}
+                <div
+                    class=""
+                    style="margin-left : {% if "login" not in request.path_info %}280px{% else %}0{% endif %}; width : {% if "login" not in request.path_info %}calc(100% - 280px){% else %}100%{% endif %}; display: flex; justify-content: center; align-items: center;"
+                >
+                    <div class="{% if "login" not in request.path_info %} w-100 {% else %} d-flex  justify-content-center align-items-center {% endif %} scrollable-content card-content">
+                        {% block content %} {% endblock %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="loadingModalBase" tabindex="-1">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <div id="progressbar">
+                            <div
+                                class="text-center"
+                                id="pb_message_loading"
+                            ></div>
+                        </div>
+                        <div class="mt-1" id="message_loading"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            $(document).ready(function () {
+                $("#update-site-btn").click(function (e) {
+                    e.preventDefault();
+                    const date = $('.datepicker').val()
+
+                    if (date == "") {
+                        MessageDialog("Message", "Veuillez renseigner une date")
+                    } else {
+                        ConfirmDialog(
+                            "Mise à jour des sites",
+                            "Voulez-vous vraiment mettre à jour les sites",
+                            lunchUpdateSite
+                        );
+                    }
+                });
+
+                $("#copy_schema_btn").click(function (e) {
+
+                    e.preventDefault();
+                    const schema_public = $('#schema_public').val()
+                    const schema_private = $('#schema_private').val()
+                    if(schema_private !== "" && schema_public !== "" && schema_private != schema_public){
+                        if(confirm("Cette action va remplacer le schéma public par le schéma privé. Voulez-vous vraiment continuer ?")){
+                            lunchCopySchema(schema_public, schema_private)
+                        }
+                    }else{
+                        MessageDialog("Message", "Veuillez renseigner les schémas public et privé. Ils doivent être différents.")
+                    }
+                });
+
+                $("#btn-import-signalement").click(function (e) {
+                    e.preventDefault();
+
+                    ConfirmDialog(
+                        "Import des données signalements",
+                        "Voulez-vous vraiment importer les données signalements ?",
+                        lunchImportSignalement
+                    );
+                });
+            });
+        </script>
+    </body>
+</html>

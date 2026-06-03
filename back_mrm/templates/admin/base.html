@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    {% if APP_MODE == "private" %}
+        <!-- <link rel="stylesheet" type="text/css" href="{% static 'css/custom_admin.css' %}"> -->
+        <style>
+            :root {
+                --primary: #27AE60 ;
+                --secondary: #239B56;
+                --primary-fg: #fff;
+            }
+            body {
+                background-color: #f8f9fa;
+            }
+            #content h1 {
+                color: black ;
+            }
+          </style>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Protest+Revolution&family=Signika:wght@300..700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <style>
+        body {
+            font-family: 'Signika', sans-serif;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .custom-table th,
+        .custom-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .custom-table th {
+            background-color: #f2f2f2;
+        }
+
+        .highlight-bg {
+            background-color: #eaf6ff;
+        }
+
+        .highlight-op3 {
+            background-color: #ffe6cc;
+        }
+
+        .highlight-red {
+            background-color: #ffd6d6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <table class="custom-table mt-3 border border-2 border-dark">
+            <thead>
+                <tr>
+                    <th style="background-color: #FFFFFF; color:#000000;" colspan="2">Date : [date_du_jour]</th>
+                    <th style="background-color: [op1_bg_color]; color:[op1_text_color];">[op1_name]</th>
+                    <th style="background-color: [op2_bg_color]; color:[op2_text_color];">[op2_name]</th>
+                    <th style="background-color: [op3_bg_color]; color:[op3_text_color];">[op3_name]</th>
+                    <th style="background-color: [op4_bg_color]; color:[op4_text_color];">[op4_name]</th>
+                    <th style="background-color: #FFFFFF;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        <b><u>EFFECTIF DES PANNES</u></b>
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];"></td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];"></td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];"></td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];"></td>
+                    <td style="background-color: #F1EDE6; color:#000000;">
+                        <b>TOTAL</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        Nombre total de sites en panne d&eacute;clar&eacute;s
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];">[op1_panne_dec]</td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];">[op2_panne_dec]</td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];">[op3_panne_dec]</td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];">[op4_panne_dec]</td>
+                    <td style="background-color: #FBFAF7; color:#000000;">[total_panne_dec]</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        Nombre total de sites d&eacute;clar&eacute;s mais non affich&eacute;s
+                    </td>
+                    <td style="background-color: [op1_bg_color];"><b>[op1_dec_n_aff]</b></td>
+                    <td style="background-color: [op2_bg_color];"><b>[op2_dec_n_aff]</b></td>
+                    <td style="background-color: [op3_bg_color];"><b>[op3_dec_n_aff]</b></td>
+                    <td style="background-color: [op4_bg_color];"><b>[op4_dec_n_aff]</b></td>
+                    <td style="background-color: #FBFAF7; color:#000000;"><b>[total_dec_n_aff]</b></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;"></td>
+                    <td style="background-color: [op1_bg_color]; color:#FFFFFF;">[op1_%_panne]%</td>
+                    <td style="background-color: [op2_bg_color]; color:#FFFFFF;">[op2_%_panne]%</td>
+                    <td style="background-color: [op3_bg_color]; color:#FFFFFF;">[op3_%_panne]%</td>
+                    <td style="background-color: [op4_bg_color]; color:#FFFFFF;">[op4_%_panne]%</td>
+                    <td style="background-color: #FBFAF7; color:#FFFFFF;"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        <b><u>COMPLETUDE DES DETAILS</u></b>
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];"></td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];"></td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];"></td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];"></td>
+                    <td style="background-color: #F1EDE6; color:#000000;">
+                        <b>MOYENNE</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        % "<b>Motif</b>" renseign&eacute;
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];">[op1_nb_motif] - [op1_%_motif]%</td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];">[op2_nb_motif] - [op2_%_motif]%</td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];">[op3_nb_motif] - [op3_%_motif]%</td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];">[op4_nb_motif] - [op4_%_motif]%</td>
+                    <td style="background-color: #FBFAF7; color:#000000;">[moyenne_%_motif]%</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        % "<b>Fin pr&eacute;vue</b>" renseign&eacute;
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];">[op1_nb_fin_prev] - [op1_%_fin_prev]%</td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];">[op2_nb_fin_prev] - [op2_%_fin_prev]%</td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];">[op3_nb_fin_prev] - [op3_%_fin_prev]%</td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];">[op4_nb_fin_prev] - [op4_%_fin_prev]%</td>
+                    <td style="background-color: #FBFAF7; color:#000000;">[moyenne_%_fin_prev]%</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        % "<b>Depuis</b>" renseign&eacute;
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];">[op1_nb_depuis] - [op1_%_depuis]%</td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];">[op2_nb_depuis] - [op2_%_depuis]%</td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];">[op3_nb_depuis] - [op3_%_depuis]%</td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];">[op4_nb_depuis] - [op4_%_depuis]%</td>
+                    <td style="background-color: #FBFAF7; color:#000000;">[moyenne_%_depuis]%</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        % "<b>Appels</b>" renseign&eacute;
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];">[op1_nb_appels] - [op1_%_appels]%</td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];">[op2_nb_appels] - [op2_%_appels]%</td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];">[op3_nb_appels] - [op3_%_appels]%</td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];">[op4_nb_appels] - [op4_%_appels]%</td>
+                    <td style="background-color: #FBFAF7; color:#000000;">[moyenne_%_appels]%</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        % "<b>Acc&egrave;s web</b>" renseign&eacute;
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];">[op1_nb_web] - [op1_%_web]%</td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];">[op2_nb_web] - [op2_%_web]%</td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];">[op3_nb_web] - [op3_%_web]%</td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];">[op4_nb_web] - [op4_%_web]%</td>
+                    <td style="background-color: #FBFAF7; color:#000000;">[moyenne_%_web]%</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        <b><u>ANALYSE</u></b>
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];"></td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];"></td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];"></td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];"></td>
+                    <td style="background-color: #FBFAF7; color:#000000;"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: #FFFFFF; color:#000000;">
+                        D&eacute;partement le plus concern&eacute; par les &eacute;carts d'affichage
+                    </td>
+                    <td style="background-color: [op1_bg_color]; color:[op1_text_color];">[op1_dep_ecart] ([op1_ecart] sites)</td>
+                    <td style="background-color: [op2_bg_color]; color:[op2_text_color];">[op2_dep_ecart] ([op2_ecart] sites)</td>
+                    <td style="background-color: [op3_bg_color]; color:[op3_text_color];">[op3_dep_ecart] ([op3_ecart] sites)</td>
+                    <td style="background-color: [op4_bg_color]; color:[op4_text_color];">[op4_dep_ecart] ([op4_ecart] sites)</td>
+                    <td style="background-color: #FBFAF7; color:#000000;"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

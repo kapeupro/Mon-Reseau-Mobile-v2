@@ -1,0 +1,17 @@
+meta {
+  name: Get regions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/featureserv/collections/mrm_last.region_light/items.json?limit=30&properties=nom,gid
+  body: none
+  auth: none
+}
+
+query {
+  limit: 30
+  properties: nom,gid
+  ~filter: nom like "%Fontain%"
+}

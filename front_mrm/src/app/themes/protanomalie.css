@@ -1,0 +1,19 @@
+html[data-theme='protanomalie'] {
+  --color-primary: #2926de;
+  --color-secondary: #d1cdf6;
+  --color-info: #67678e;
+  --violet-10: #7e7ac7;
+  --violet-20: #242253;
+  --grey-20: #d5d5d5;
+  --stone-10: #f1f1f7;
+  --stone-20: #e7e6f1;
+  --stone-30: #d3d3f0;
+  --primary-500: #7a799d;
+  --greenTheme-500: #1d1074;
+  --greenTheme-100: #a28fff;
+  --violetTheme-500: #7e7ac8;
+  --violetTheme-100: #bfb6ff;
+  --primary-200: #d1d0e7;
+  --purple-20: #cfccff;
+  --bleu-02: #1c088e;
+}

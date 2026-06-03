@@ -1,0 +1,355 @@
+# Fichier créé le 09-10-2023
+# Le fichier peut être amené à être modifié
+
+# Orange
+- 20801:
+  informations:
+    identifiant: 20801
+    nom_entier: "Orange France"
+    nom_affichage: "Orange"
+    logo: ""
+  couleurs:
+    defaut: "#ff8700"
+    niveau_1: "#ffc584"
+    niveau_2: "#ff8700"
+    niveau_3: "#c06600"
+    niveau_4: "#864701"
+  perimetres:
+    metro: true # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# Bouygues Telecom
+- 20820:
+  informations:
+    identifiant: 20820
+    nom_entier: "Bouygues Telecom"
+    nom_affichage: "Bouygues"
+    logo: ""
+  couleurs:
+    defaut: "#3dd0ff"
+    niveau_1: "#a9eaff"
+    niveau_2: "#3dd0ff"
+    niveau_3: "#24b2de"
+    niveau_4: "#0d7495"
+  perimetres:
+    metro: true # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# SFR
+- 20810:
+  informations:
+    identifiant: 20810
+    nom_entier: "Société Française du radiotéléphone"
+    nom_affichage: "SFR"
+    logo: ""
+  couleurs:
+    defaut: "#b54241"
+    niveau_1: "#ffabaa"
+    niveau_2: "#e47170"
+    niveau_3: "#b54241"
+    niveau_4: "#880100"
+  perimetres:
+    metro: true # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# Free Mobile
+- 20815:
+  informations:
+    identifiant: 20815
+    nom_entier: "Free Mobile"
+    nom_affichage: "Free"
+    logo: ""
+  couleurs:
+    defaut: "#4be1bb"
+    niveau_1: "#8fffe3"
+    niveau_2: "#4be1bb"
+    niveau_3: "#32ba98"
+    niveau_4: "#10745b"
+  perimetres:
+    metro: true # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# Digicel
+- 34020:
+  informations:
+    identifiant: 34020
+    nom_entier: "Digicel"
+    nom_affichage: "Digicel"
+    logo: ""
+  couleurs:
+    defaut: "#f47682"
+    niveau_1: "#f9bac0"
+    niveau_2: "#f47682"
+    niveau_3: "#ee3143"
+    niveau_4: "#d01124"
+  perimetres:
+    metro: false # Metropole
+    971: true # Guadeloupe
+    972: true # Martinique
+    973: true # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: true # Saint-Barthélémy
+    978: true # Saint-Martin
+# Zeop
+- 64704:
+  informations:
+    identifiant: 64704
+    nom_entier: "Zeop"
+    nom_affichage: "Zeop"
+    logo: ""
+  couleurs:
+    defaut: "#A071A2"
+    niveau_1: "#CFB8D0"
+    niveau_2: "#A071A2"
+    niveau_3: "#702A74"
+    niveau_4: "#57205a"
+  perimetres:
+    metro: false # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: true # La Reunion
+    976: false # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# Only
+- 64702:
+  informations:
+    identifiant: 64702
+    nom_entier: "Only"
+    nom_affichage: "Only"
+    logo: ""
+  couleurs:
+    defaut: "#ea7aab"
+    niveau_1: "#f4bcd5"
+    niveau_2: "#ea7aab"
+    niveau_3: "#e03881"
+    niveau_4: "#D4216E"
+  perimetres:
+    metro: false # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: false # La Reunion
+    976: true # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# Maore Mobile
+- 64701:
+  informations:
+    identifiant: 64701
+    nom_entier: "Maore Mobile"
+    nom_affichage: "Maore"
+    logo: ""
+  couleurs:
+    defaut: "#66e766"
+    niveau_1: "#b2f3b2"
+    niveau_2: "#66e766"
+    niveau_3: "#19db19"
+    niveau_4: "#14b814"
+  perimetres:
+    metro: false # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: false # La Reunion
+    976: true # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# Orange Caraïbes
+- 34001:
+  informations:
+    identifiant: 34001
+    nom_entier: "Orange Caraïbes"
+    nom_affichage: "Orange"
+    logo: ""
+  couleurs:
+    defaut: "#ff8700"
+    niveau_1: "#ffc584"
+    niveau_2: "#ff8700"
+    niveau_3: "#c06600"
+    niveau_4: "#864701"
+  perimetres:
+    metro: false # Metropole
+    971: true # Guadeloupe
+    972: true # Martinique
+    973: true # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: true # Saint-Barthélémy
+    978: true # Saint-Martin
+# Orange Océan Indien
+- 64700:
+  informations:
+    identifiant: 64700
+    nom_entier: "Orange"
+    nom_affichage: "Orange"
+    logo: ""
+  couleurs:
+    defaut: "#ff8700"
+    niveau_1: "#ffc584"
+    niveau_2: "#ff8700"
+    niveau_3: "#c06600"
+    niveau_4: "#864701"
+  perimetres:
+    metro: false # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: true # La Reunion
+    976: true # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# SFR Caraïbes
+- 34002:
+  informations:
+    identifiant: 34002
+    nom_entier: "SFR Caraïbes"
+    nom_affichage: "SFR"
+    logo: ""
+  couleurs:
+    defaut: "#b54241"
+    niveau_1: "#ffabaa"
+    niveau_2: "#e47170"
+    niveau_3: "#b54241"
+    niveau_4: "#880100"
+  perimetres:
+    metro: false # Metropole
+    971: true # Guadeloupe
+    972: true # Martinique
+    973: true # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# SFR Océan Indien
+- 64710:
+  informations:
+    identifiant: 64710
+    nom_entier: "Société Réunionaise du radiotéléphone"
+    nom_affichage: "SRR"
+    logo: ""
+  couleurs:
+    defaut: "#b54241"
+    niveau_1: "#ffabaa"
+    niveau_2: "#e47170"
+    niveau_3: "#b54241"
+    niveau_4: "#880100"
+  perimetres:
+    metro: false # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: true # La Reunion
+    976: true # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# Free Caraïbes
+- 34004:
+  informations:
+    identifiant: 34004
+    nom_entier: "Free Caraïbes"
+    nom_affichage: "Free"
+    logo: ""
+  couleurs:
+    defaut: "#4be1bb"
+    niveau_1: "#8fffe3"
+    niveau_2: "#4be1bb"
+    niveau_3: "#32ba98"
+    niveau_4: "#10745b"
+  perimetres:
+    metro: false # Metropole
+    971: true # Guadeloupe
+    972: true # Martinique
+    973: true # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: true # Saint-Barthélémy
+    978: true # Saint-Martin
+# Free Océan Indien
+- 64703:
+  informations:
+    identifiant: 64703
+    nom_entier: "Free Mobile"
+    nom_affichage: "Free"
+    logo: ""
+  couleurs:
+    defaut: "#4be1bb"
+    niveau_1: "#8fffe3"
+    niveau_2: "#4be1bb"
+    niveau_3: "#32ba98"
+    niveau_4: "#10745b"
+  perimetres:
+    metro: false # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: true # La Reunion
+    976: false # Mayotte
+    977: false # Saint-Barthélémy
+    978: false # Saint-Martin
+# UTS
+- 34003:
+  informations:
+    identifiant: 34003
+    nom_entier: "UTS"
+    nom_affichage: "UTS"
+    logo: ""
+  couleurs:
+    defaut: "#c2c2c2"
+    niveau_1: "#d6d6d6"
+    niveau_2: "#c2c2c2"
+    niveau_3: "#aaaaaa"
+    niveau_4: "#999999"
+  perimetres:
+    metro: false # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: false # Saint-Barthélémy
+    978: true # Saint-Martin
+# Dauphin Telecom
+- 34008:
+  informations:
+    identifiant: 34008
+    nom_entier: "Dauphin Telecom"
+    nom_affichage: "Dauphin"
+    logo: ""
+  couleurs:
+    defaut: "#3dd0ff"
+    niveau_1: "#a9eaff"
+    niveau_2: "#3dd0ff"
+    niveau_3: "#24b2de"
+    niveau_4: "#0d7495"
+  perimetres:
+    metro: false # Metropole
+    971: false # Guadeloupe
+    972: false # Martinique
+    973: false # Guyane
+    974: false # La Reunion
+    976: false # Mayotte
+    977: true # Saint-Barthélémy
+    978: true # Saint-Martin

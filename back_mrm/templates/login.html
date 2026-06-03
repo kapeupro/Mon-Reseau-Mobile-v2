@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %} Page login import {% endblock %}
+
+{% block content %}
+    <form 
+        method="post" 
+        class="d-flex flex-column justify-content-center align-items-center shadow card w-auto p-5 gap-3"
+    >
+        {% csrf_token %}
+        <h2> ARCEP ADMIN </h2>
+        {% if error_message %}
+            <p class="text-danger">{{ error_message }}</p>
+        {% endif %}
+        <div class="form-group w-100">
+            <label for="username" class="control-label">Utilisateur</label>
+            <input name="username" value="" type="text" class="form-control" />
+        </div>
+        <div class="form-group w-100">
+            <label for="password" class="control-label">Mot de passe</label>
+            <input name="password" type="password" class="form-control" />
+        </div>
+        <div class="form-group w-100">
+            <input name="login" type="submit" value="Se connecter" class="btn btn-success btn-block w-100" />
+        </div>
+    </form>
+{% endblock %}

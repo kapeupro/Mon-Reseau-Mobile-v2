@@ -1,0 +1,1345 @@
+{% extends "base.html" %} {% block title %} Page Sites {% endblock %}
+<style>
+    #loadingModal {
+        display: none;
+    }
+
+    #loadingModal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    body.loading {
+        pointer-events: none;
+    }
+</style>
+{% block content %} {% load static %}
+<script src="{% static 'site.js' %}"></script>
+
+<!-- Modal -->
+<div
+    class="modal fade"
+    id="loadingModal"
+    tabindex="-1"
+>
+    <div
+        class="modal-dialog modal-lg"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5
+                    class="modal-title"
+                    id="loadingModalLabel"
+                >
+                    Import
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div id="progressbar">
+                    <div
+                        class="progress-label"
+                        style="left: 40.5%"
+                    >
+                        Chargement en cours...
+                    </div>
+                </div>
+                <div
+                    class="mt-1"
+                    id="message_loading"
+                    style="max-height: 500px; overflow: auto"
+                ></div>
+            </div>
+            <div class="modal-footer modalFooter">
+                <button
+                    type="button"
+                    class="btn btn-secondary w-25"
+                    id="closeModal"
+                >
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div
+    class="modal"
+    id="messageModal"
+    tabindex="-1"
+>
+    <div
+        class="modal-dialog modal-lg"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-body">
+                <div id="labelMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End modal -->
+
+<!-- Modal upload -->
+<div
+    class="modal fade"
+    id="uploadModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="uploadModalLabel"
+    aria-hidden="true"
+>
+    <div
+        class="modal-dialog"
+        role="document"
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5
+                    class="modal-title"
+                    id="uploadModalLabel"
+                >
+                    Ajouter un ou plusieur fichier(s)
+                </h5>
+                <button
+                    type="button"
+                    class="close"
+                    data-dismiss="modal"
+                    aria-label="Close"
+                >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div
+                class="modal-body"
+                id="modal-body-content"
+            >
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-dismiss="modal"
+                >
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Modal -->
+<h3 class="text-primary">
+    Nature
+    <a
+        class="bi bi-info-circle-fill info_button_nature"
+        style="cursor: pointer"
+    ></a>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_nature %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span
+                        class=""
+                        style="font-weight: 100; font-size: 17px"
+                        >{{ folder_nature }}</span
+                    >
+                </h4>
+                <div>
+                    <table
+                        id="fileTableNature"
+                        class="table"
+                    >
+                        <thead>
+                            <tr>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div
+                                id="errorSectionnature"
+                                class="alert alert-danger"
+                                style="position: relative; display: none"
+                            >
+                                <span
+                                    class="closeErrorMsgnature"
+                                    aria-hidden="true"
+                                    style="
+                                        cursor: pointer;
+                                        position: absolute;
+                                        top: 50%;
+                                        right: 10px;
+                                        transform: translateY(-50%);
+                                        font-size: 24px;
+                                    "
+                                    >&times;</span
+                                >
+                                <div id="errorMsgnature"></div>
+                            </div>
+                            {% for elt in data_nature %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_nature"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='natures' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_nature"
+                                        data-import-type="nature"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour nature
+                        dans {{ folder_nature }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <a
+                    id="upload-btn-natures"
+                    type="button"
+                    class="btn btn-success rounded-pill shadow"
+                    href="{% url 'upload' 'natures' %}"
+                    >Ajouter un fichier</a
+                >
+                <a
+                    id="importButtonNature"
+                    type="button"
+                    class="btn btn-warning rounded-pill shadow"
+                    data-url="{% url 'import_db' 'natures' %}"
+                    >Importer Db</a
+                >
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_nature_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table
+                        id="dbTableNature"
+                        class="table"
+                    >
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_nature_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_nature"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='natures' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<h3 class="text-primary mt-3">
+    Site
+    <em
+        class="bi bi-info-circle-fill info_button_site"
+        style="cursor: pointer"
+    ></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_site %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span
+                        class=""
+                        style="font-weight: 100; font-size: 17px"
+                        >{{ folder_site }}</span
+                    >
+                </h4>
+                <div>
+                    <table
+                        id="fileTableSite"
+                        data-order='[[ 0, "asc" ]]'
+                    >
+                        <thead>
+                            <tr
+                                tr
+                                class="bg-light"
+                            >
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div
+                                id="errorSectionsite"
+                                class="alert alert-danger"
+                                style="position: relative; display: none"
+                            >
+                                <span
+                                    class="closeErrorMsgsite"
+                                    aria-hidden="true"
+                                    style="
+                                        cursor: pointer;
+                                        position: absolute;
+                                        top: 50%;
+                                        right: 10px;
+                                        transform: translateY(-50%);
+                                        font-size: 24px;
+                                    "
+                                    >&times;</span
+                                >
+                                <div id="errorMsgsite"></div>
+                            </div>
+                            {% for elt in data_site %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_site"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='sites' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_site"
+                                        data-import-type="site"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour site
+                        dans {{ folder_site }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <div class="d-flex flex-row justify-content-between mt-3">
+                    <div>
+                        <a
+                            id="upload-btn-sites"
+                            type="button"
+                            class="btn btn-success rounded-pill shadow"
+                            href="{% url 'upload' 'sites' %}"
+                        >
+                            Ajouter un fichier
+                        </a>
+                        <a
+                            id="importButtonSite"
+                            type="button"
+                            class="btn btn-warning rounded-pill shadow"
+                            data-url="{% url 'import_db' 'sites' %}"
+                        >
+                            Importer Db
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_site_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table
+                        id="dbTableSite"
+                        class="table"
+                    >
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_site_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_site"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='sites' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_site"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_site }}"
+                        data-type="sites"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<h3 class="text-primary mt-3">
+    Station-Bande-Antenne-Support-Emetteur
+    <em
+        class="bi bi-info-circle-fill info_button_sase"
+        style="cursor: pointer"
+    ></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_station %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span
+                        class=""
+                        style="font-weight: 100; font-size: 17px"
+                        >{{ folder_station }}</span
+                    >
+                </h4>
+                <div>
+                    <table
+                        id="fileTableStation"
+                        class="table"
+                    >
+                        <thead>
+                            <tr>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div
+                                id="errorSectionstation"
+                                class="alert alert-danger"
+                                style="position: relative; display: none"
+                            >
+                                <span
+                                    class="closeErrorMsgstation"
+                                    aria-hidden="true"
+                                    style="
+                                        cursor: pointer;
+                                        position: absolute;
+                                        top: 50%;
+                                        right: 10px;
+                                        transform: translateY(-50%);
+                                        font-size: 24px;
+                                    "
+                                    >&times;</span
+                                >
+                                <div id="errorMsgstation"></div>
+                            </div>
+                            {% for elt in data_station %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_station"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='stations' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_station"
+                                        data-import-type="station"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour
+                        station dans {{ folder_station }}
+                    </p>
+                </div>
+                {% endif %}
+                <div class="d-flex flex-row justify-content-between mt-3">
+                    <div>
+                        <a
+                            id="upload-btn-stations"
+                            type="button"
+                            class="btn btn-success rounded-pill shadow"
+                            href="{% url 'upload' 'stations' %}"
+                            >Ajouter un fichier</a
+                        >
+                        <a
+                            id="importButtonStation"
+                            type="button"
+                            class="btn btn-warning rounded-pill shadow"
+                            data-preurl="{% url 'get_files_sabes' %}"
+                            data-isfilegenerated="{% url 'isfilegenerated' %}"
+                            data-url="{% url 'import_db' 'stations' %}"
+                            >Importer Db</a
+                        >
+                    </div>
+                    <a
+                        id="consolidation_station"
+                        type="button"
+                        class="btn btn-primary btn-block shadow"
+                        data-table="{{ table_name_support }}"
+                        data-url="{% url 'consolidation' %}"
+                        style="display: none"
+                    >
+                        Lancer la consolidation des tables associés aux sites
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                <div class="d-flex">
+                    <button
+                        id="deleteAllTable_station"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow mb-3"
+                        data-url="{% url 'deleteallstation' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                    <h3 class="text-danger">
+                        <em
+                            class="p-1 bi bi-info-circle-fill info_button_delete_all"
+                            style="cursor: pointer"
+                        ></em>
+                    </h3>
+                </div>
+                <div class="shadow border p-2">
+                    {% if data_station_db %}
+                    <h4>
+                        <strong
+                            >Liste de fichiers station dans la base de
+                            données</strong
+                        >
+                    </h4>
+                    <div>
+                        <table
+                            id="dbTableStation"
+                            class="table"
+                        >
+                            <thead>
+                                <tr>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_station_db %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_station"
+                                            title="Supprimer dans la base de données"
+                                            data-url="{% url 'delete_file_db' data_type='stations' file_name=elt.filename %}"
+                                        >
+                                            <em class="bi bi-trash"></em>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_station"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_station }}"
+                            data-type="stations"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé pour station dans la base de
+                            données</strong
+                        >
+                    </p>
+                    {% endif %}
+                </div>
+                <br />
+                <hr />
+                <br />
+                <div class="shadow border p-2">
+                    {% if data_bande_db %}
+                    <h4>
+                        <strong
+                            >Liste de fichiers bande dans la base de
+                            données</strong
+                        >
+                    </h4>
+                    <div>
+                        <table
+                            id="dbTableBande"
+                            class="table"
+                        >
+                            <thead>
+                                <tr>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_bande_db %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_bande"
+                                            title="Supprimer dans la base de données"
+                                            data-url="{% url 'delete_file_db' data_type='bandes' file_name=elt.filename %}"
+                                        >
+                                            <em class="bi bi-trash"></em>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_bande"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_bande }}"
+                            data-type="bandes"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé pour bande dans la base de
+                            données</strong
+                        >
+                    </p>
+                    {% endif %}
+                </div>
+                <br />
+                <hr />
+                <br />
+                <div class="shadow border p-2">
+                    {% if data_antenne_db %}
+                    <h4>
+                        <strong
+                            >Liste de fichiers antenne dans la base de
+                            données</strong
+                        >
+                    </h4>
+                    <div>
+                        <table
+                            id="dbTableAntenne"
+                            class="table"
+                        >
+                            <thead>
+                                <tr>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_antenne_db %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_antenne"
+                                            title="Supprimer dans la base de données"
+                                            data-url="{% url 'delete_file_db' data_type='antennes' file_name=elt.filename %}"
+                                        >
+                                            <em class="bi bi-trash"></em>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_antenne"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_antenne }}"
+                            data-type="antennes"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong
+                                >Aucun fichier trouvé pour antenne dans la base
+                                de données</strong
+                            >
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+                <br />
+                <hr />
+                <br />
+                <div class="shadow border p-2">
+                    {% if data_support_db %}
+                    <h4>
+                        <strong
+                            >Liste de fichiers support dans la base de
+                            données</strong
+                        >
+                    </h4>
+                    <div>
+                        <table
+                            id="dbTableSupport"
+                            class="table"
+                        >
+                            <thead>
+                                <tr>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_support_db %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_support"
+                                            title="Supprimer dans la base de données"
+                                            data-url="{% url 'delete_file_db' data_type='supports' file_name=elt.filename %}"
+                                        >
+                                            <em class="bi bi-trash"></em>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_support"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_support }}"
+                            data-type="supports"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong
+                                >Aucun fichier trouvé pour support dans la base
+                                de données</strong
+                            >
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+                <br />
+                <hr />
+                <br />
+                <div class="shadow border p-2">
+                    {% if data_emetteur_db %}
+                    <h4>
+                        <strong
+                            >Liste de fichiers émetteur dans la base de
+                            données</strong
+                        >
+                    </h4>
+                    <div>
+                        <table
+                            id="dbTableEmetteur"
+                            class="table"
+                        >
+                            <thead>
+                                <tr>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_emetteur_db %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_emetteur"
+                                            title="Supprimer dans la base de données"
+                                            data-url="{% url 'delete_file_db' data_type='emetteurs' file_name=elt.filename %}"
+                                        >
+                                            <em class="bi bi-trash"></em>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_emetteur"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_emetteur }}"
+                            data-type="emetteurs"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong
+                                >Aucun fichier trouvé pour émetteur dans la base
+                                de données</strong
+                            >
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+                <br />
+            </div>
+        </div>
+    </div>
+</div>
+<h3
+    class="text-primary"
+    style="margin-top: 20px"
+>
+    Site à venir
+    <em
+        class="bi bi-info-circle-fill info_button_site_avenir"
+        style="cursor: pointer"
+    ></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_site_avenir %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span
+                        class=""
+                        style="font-weight: 100; font-size: 17px"
+                        >{{ folder_site_avenir }}</span
+                    >
+                </h4>
+                <div>
+                    <table
+                        id="fileTableSiteAvenir"
+                        data-order='[[ 0, "asc" ]]'
+                    >
+                        <thead>
+                            <tr
+                                tr
+                                class="bg-light"
+                            >
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div
+                                id="errorSectionsiteAvenir"
+                                class="alert alert-danger"
+                                style="position: relative; display: none"
+                            >
+                                <span
+                                    class="closeErrorMsgsite"
+                                    aria-hidden="true"
+                                    style="
+                                        cursor: pointer;
+                                        position: absolute;
+                                        top: 50%;
+                                        right: 10px;
+                                        transform: translateY(-50%);
+                                        font-size: 24px;
+                                    "
+                                    >&times;</span
+                                >
+                                <div id="errorMsgsiteAvenir"></div>
+                            </div>
+                            {% for elt in data_site_avenir %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_site_a_venir"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='site_a_venir' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_siteavenir"
+                                        data-import-type="site_a_venir"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour site
+                        dans {{ folder_site_avenir }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <div class="d-flex flex-row justify-content-between mt-3">
+                    <div>
+                        <a
+                            id="upload-btn-sites-avenir"
+                            type="button"
+                            class="btn btn-success rounded-pill shadow"
+                            href="{% url 'upload' 'site_a_venir' %}"
+                        >
+                            Ajouter un fichier
+                        </a>
+                        <a
+                            id="importButtonSiteAvenir"
+                            type="button"
+                            class="btn btn-warning rounded-pill shadow"
+                            data-url="{% url 'import_db' 'site_a_venir' %}"
+                        >
+                            Importer Db
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_site_avenir_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table
+                        id="dbTableSiteAvenir"
+                        class="table"
+                    >
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_site_avenir_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_site_a_venir"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='site_a_venir' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_site_a_venir"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_site_avenir }}"
+                        data-type="a_venir"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<div
+    class="shadow card p-2"
+    style="margin-top: 20px"
+>
+    <div class="card-body">
+        <div class="d-flex justify-content-center">
+            <a
+                id="consolidation_site"
+                type="button"
+                class="btn btn-primary btn-block shadow w-100"
+                data-tableconsolide="consolide_site"
+                data-table="{{ table_name_site }}"
+                data-url="{% url 'consolidation' %}"
+            >
+                Lancer la consolidation des tables associés aux sites
+            </a>
+            <h3 class="text-primary">
+                <em
+                    class="p-1 bi bi-info-circle-fill info_button_consolidation_site"
+                    style="cursor: pointer"
+                ></em>
+            </h3>
+        </div>
+    </div>
+</div>
+<h3 class="text-primary mt-3">
+    Emetteur Link
+    <em
+        class="bi bi-info-circle-fill info_button_emetteur_link"
+        style="cursor: pointer"
+    ></em>
+</h3>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_emetteur_link %}
+                <h4>
+                    <strong>Liste de fichiers dans le dossier</strong>
+                    <span
+                        class=""
+                        style="font-weight: 100; font-size: 17px"
+                        >{{ folder_emetteur_link }}</span
+                    >
+                </h4>
+                <div>
+                    <table
+                        id="fileTableEmetteurLink"
+                        class="table"
+                    >
+                        <thead>
+                            <tr>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <div
+                                id="errorSectionemetteurlink"
+                                class="alert alert-danger"
+                                style="position: relative; display: none"
+                            >
+                                <span
+                                    class="closeErrorMsgemetteurlink"
+                                    aria-hidden="true"
+                                    style="
+                                        cursor: pointer;
+                                        position: absolute;
+                                        top: 50%;
+                                        right: 10px;
+                                        transform: translateY(-50%);
+                                        font-size: 24px;
+                                    "
+                                    >&times;</span
+                                >
+                                <div id="errorMsgemetteurlink"></div>
+                            </div>
+                            {% for elt in data_emetteur_link %}
+                            <tr>
+                                <td>{{ elt }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_file_emetteurlink"
+                                        title="Supprimer le fichier dans le dossier"
+                                        data-url="{% url 'delete_file' data_type='emetteurs_link' file_name=elt %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_emetteurlink"
+                                        data-import-type="emetteurlink"
+                                        title="Importer le fichier dans la base"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em
+                                            class="bi bi-database-fill-add"
+                                        ></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong>Aucun fichier source trouvé</strong> pour
+                        émetteur dans {{ folder_emetteur_link }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <a
+                    id="upload-btn-emetteurs_link"
+                    type="button"
+                    class="btn btn-success rounded-pill shadow"
+                    href="{% url 'upload' 'emetteurs_link' %}"
+                    >Ajouter un fichier</a
+                >
+                <a
+                    id="importButtonEmetteurLink"
+                    type="button"
+                    class="btn btn-warning rounded-pill shadow"
+                    data-url="{% url 'import_db' 'emetteurs_link' %}"
+                    >Importer Db</a
+                >
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="shadow card">
+            <div class="card-body">
+                {% if data_emetteur_link_db %}
+                <h4>
+                    <strong>Liste de fichiers dans la base de données</strong>
+                </h4>
+                <div>
+                    <table
+                        id="dbTableEmetteurLink"
+                        class="table"
+                    >
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Nom du fichier</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elt in data_emetteur_link_db %}
+                            <tr>
+                                <td>{{ elt.nb }}</td>
+                                <td>{{ elt.filename }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_db_emetteurlink"
+                                        title="Supprimer dans la base de données"
+                                        data-url="{% url 'delete_file_db' data_type='emetteurs_link' file_name=elt.filename %}"
+                                    >
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-center mt-3">
+                    <button
+                        id="deleteAll_emetteurlink"
+                        type="button"
+                        class="btn btn-danger rounded-pill shadow"
+                        data-tablename="{{ table_name_emetteur_link }}"
+                        data-type="emetteurs_link"
+                        data-url="{% url 'deleteall' %}"
+                    >
+                        Tout supprimer
+                    </button>
+                </div>
+                {% else %}
+                <div>
+                    <p>
+                        <strong
+                            >Aucun fichier trouvé dans la base de
+                            données</strong
+                        >
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

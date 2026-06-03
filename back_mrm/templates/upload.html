@@ -1,0 +1,188 @@
+{% block content %}
+<div class="card-body">
+    <h5>Ajouter un nouveau fichier</h5>
+    <form
+        id="file-form"
+        method="post"
+        action="{% url 'upload' data_type %}"
+        enctype="multipart/form-data"
+        class="form-inline"
+    >
+        {% csrf_token %}
+        <input
+            type="file"
+            multiple
+            name="files"
+            accept=".json,.csv,.gpkg,.zip,.txt"
+        />
+        {% if data_type == 'couvertures' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'couvertures' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'stats_nbope' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'couvertures' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'stat_communes' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'couvertures' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'stat_departements' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'couvertures' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'stat_regions' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'couvertures' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'stat_territoires' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'couvertures' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'sites' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'sites' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'natures' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'sites' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'qos' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'qos' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'stats_qos_departements' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'qos' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'qos_density' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'qos' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'insee_density' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'qos' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'stations' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'sites' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'antennes' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'sites' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'supports' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'sites' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'emetteurs' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'sites' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'emetteurs_link' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'sites' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'zac_poi' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'zac' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'zac_site' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'zac' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'zac_rfr' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'zac' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'zac_arp' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'zac' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'zac_arp_5g' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'zac' %}"
+            >Annuler</a
+        >
+        {% elif data_type == 'signalements' %}
+        <a
+            type="button"
+            class="btn btn-danger"
+            href="{%url 'signalements' %}"
+            >Annuler</a
+        >
+        {% endif %} &nbsp;
+        <button
+            type="submit"
+            class="btn btn-success"
+        >
+            Télécharger
+        </button>
+    </form>
+</div>
+{% endblock %}

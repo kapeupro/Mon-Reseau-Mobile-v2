@@ -1,0 +1,16 @@
+[
+  {
+    "identifiant": "A547A4",
+    "support": "Château d'eau",
+    "hauteur": "18 m",
+    "localisation": {
+      "adresse": "32 rue Alexandre Dumas, 75011, Paris",
+      "coordonnees": {
+        "lat": "48.85330741913758",
+        "long": "2.39193965070763"
+      }
+    },
+    "construction": "12 Aôut 2019",
+    "consommation": "300 W"
+  }
+]

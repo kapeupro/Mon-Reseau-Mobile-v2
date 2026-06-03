@@ -1,0 +1,845 @@
+{% extends "base.html" %} {% block title %} Page couvertures {% endblock %}
+<style>
+
+    /* #loadingModal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    } */
+
+    body.loading {
+        pointer-events: none;
+    }
+</style>
+{% block content %}
+{% load static %}
+<script src="{% static 'couverture.js' %}"></script>
+
+<!-- Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loadingModalLabel">Import</h5>
+            </div>
+            <div class="modal-body">
+                <div id="progressbar" ><div class="progress-label" style="left:40.5%;">Chargement en cours...</div></div>
+                <div class='mt-1' id="message_loading" style="max-height: 500px; overflow: auto;"></div>
+            </div>
+            <div class="modal-footer modalFooter">
+                <button
+                    type="button"
+                    class="btn btn-secondary w-25"
+                    id="closeModal"
+                >
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div id="labelMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+ <!-- Modal upload -->
+ <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">Ajouter un ou plusieur fichier(s)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Modal -->
+
+<div class="">
+    <h3 class="text-primary">
+        Couverture théorique
+        <em class="bi bi-info-circle-fill info_button_couverture" style="cursor: pointer;"></em>
+    </h3>
+    <div class="row">
+        <div class="col-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data %}
+                    <h4>
+                        <strong>Liste de fichiers dans le dossier</strong>
+                        <span class="" style="font-weight: 100; font-size: 17px">{{ folder }}</span>
+                    </h4>
+                    <div>
+                        <table id="fileTable" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th>Nom du fichier</th>
+                                    <th data-orderable="false">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <div id="errorSectionCouverture" class="alert alert-danger" style="position: relative; display: none;">
+                                    <span class="closeErrorMsgCouverture" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                    <div id="errorMsgCouverture"></div>
+                                </div>
+                                {% for elt in data %}
+                                <tr>
+                                    <td>{{ elt }}</td>
+                                    <td>
+                                    <button type="button" class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_fileCouverture" title="Supprimer le fichier dans le dossier" data-url="{% url 'delete_file' data_type='couvertures' file_name=elt %}">
+                                        <em class="bi bi-trash"></em>
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_Couverture" 
+                                        title="importer le fichier dans la base"
+                                        data-import-type="Couverture"
+                                        data-filename="{{ elt }}"
+                                    >
+                                        <em class="bi bi-database-fill-add"></em>
+                                    </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier source trouvé</strong> pour couvertures
+                            dans {{ folder }}
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex flex-row justify-content-between mt-3">
+                        <div>
+                            <a id="upload-btn-couvertures" type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'couvertures' %}">
+                                Ajouter un fichier
+                            </a>
+                            <button id="importButtonCouverture" data-url="{% url 'import_db' 'couvertures' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                                Importer db
+                            </button>
+                        </div>
+                        <div class="d-flex">
+                            <button id="consolidationCouverture" data-url="{% url 'import_db' 'consolidation_couvertures' %}" type="button" class="btn btn-primary rounded-pill shadow" >
+                                Lancer la consolidation
+                            </button>
+                            <h3 class="text-primary">
+                                <em class="p-1 bi bi-info-circle-fill info_button_consolidation_couverture" style="cursor: pointer;"></em>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_db %}
+                    <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                    <div>
+                        <table id="tableCouvertureBd" data-order='[[ 1, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col" data-orderable="false">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_db %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                      <button type="button" class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bdCouverture" title="Supprimer dans la base de données" data-url="{% url 'delete_file_db' data_type='couvertures' file_name=elt.filename %}">
+                                        <em class="bi bi-trash"></em>
+                                      </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_couverture"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name }}"
+                            data-type="couvertures"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier trouvé dans la base de données</strong>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="text-primary my-3">
+        Statistiques nombre opérateurs
+        <em class="bi bi-info-circle-fill info_button_stat_nbope" style="cursor: pointer;"></em>
+    </h3>
+    <div class="row">
+        <div class="col-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_stat_nbope %}
+                    <h4>
+                        <strong>Liste de fichiers dans le dossier</strong> 
+                        <span class="" style="font-weight: 100; font-size: 17px">{{ folder_stat_nbope }}</span>
+                    </h4>
+                    <div>
+                        <table id="fileTableNbOpe" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <div id="errorSectionStatNbOpe" class="alert alert-danger" style="position: relative; display: none;">
+                                    <span class="closeErrorMsgStatNbOpe" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                    <div id="errorMsgStatNbOpe"></div>
+                                </div>
+                                {% for elt in data_stat_nbope %}
+                                <tr>
+                                    <td>{{ elt }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_fileStatNbOpe " title="Supprimer le fichier dans le dossier" data-url="{% url 'delete_file' data_type='stats_nbope' file_name=elt %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_StatNbOpe" 
+                                            data-import-type="StatNbOpe" 
+                                            title="importer le fichier dans la base" 
+                                            data-filename="{{ elt }}"
+                                        >
+                                            <em class="bi bi-database-fill-add"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier source trouvé</strong> pour statistiques
+                            nombre opérateurs dans {{ folder_stat_nbope }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex mt-2">
+                        <a id="upload-btn-stats_nbope"  type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'stats_nbope' %}">
+                        Ajouter un fichier
+                        </a>
+                        <button id="importButtonStatNbOpe" data-url="{% url 'import_db' 'stats_nbope' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                            Importer db
+                        </button>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_stat_nbope_db %}
+                    <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                    <div>
+                        <table id="tableStatNbOpebd" data-order='[[ 1, "asc" ]]' >
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_stat_nbope_db %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bdStatNbOpe" 
+                                            title="Supprimer dans la base de données" 
+                                            data-url="{% url 'delete_file_db' data_type='stats_nbope' file_name=elt.filename %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_stats_nbope"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_stat_nbope }}"
+                            data-type="stats_nbope"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier trouvé dans la base de données</strong>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="text-primary my-3">
+        Statistiques couverture commune
+        <em class="bi bi-info-circle-fill info_button_stat_commune" style="cursor: pointer;"></em>
+    </h3>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_stat_commune %}
+                    <h4>
+                        Liste de fichiers dans le dossier
+                        <span style="font-weight: 100; font-size: 17px;">{{ folder_stat_commune }}</span>
+                    </h4>
+                    <div>
+                        <table id="fileTableCommune" data-order='[[ 0, "asc" ]]' >
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <div id="errorSectionStatCommunes" class="alert alert-danger" style="position: relative; display: none;">
+                                    <span class="closeErrorMsgStatCommunes" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                    <div id="errorMsgStatCommunes"></div>
+                                </div>
+                                {% for elt in data_stat_commune %}
+                                <tr>
+                                    <td>{{ elt }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_fileStatCommunes" title="Supprimer le fichier dans le dossier" data-url="{% url 'delete_file' data_type='stat_communes' file_name=elt %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                          <button 
+                                            type="button" class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_StatCommunes" 
+                                            data-import-type="StatCommunes" 
+                                            title="importer le fichier dans la base" 
+                                            data-filename="{{ elt }}"
+                                        >
+                                            <em class="bi bi-database-fill-add"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div>
+                        <p><strong>Aucun fichier source trouvé</strong> pour commune dans {{ folder_stat_commune }}</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex mt-2">
+                        <a id="upload-btn-stat_communes" type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'stat_communes' %}">
+                        Ajouter un fichier
+                        </a>
+                        <button id="importButtonStatCommunes" data-url="{% url 'import_db' 'stat_communes' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                            Importer db
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_db_stat_commune %}
+                    <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                    <div>
+                        <table id="fileTableCommuneData" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_db_stat_commune %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bdStatCommunes" 
+                                            title="Supprimer dans la base de données" 
+                                            data-url="{% url 'delete_file_db' data_type='stat_communes' file_name=elt.filename %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_stat_communes"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_stat_commune }}"
+                            data-type="stat_communes"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier trouvé dans la base de données</strong>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="text-primary my-3">
+        Statistiques couverture departement
+        <em class="bi bi-info-circle-fill info_button_stat_departement" style="cursor: pointer;"></em>
+    </h3>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_stat_departement %}
+                    <h4>
+                        <strong>Liste de fichiers dans le dossier</strong>
+                        <span class="" style="font-weight: 100; font-size: 17px">{{ folder_stat_departement }}</span>
+                    </h4>
+                    <div>
+                        <table id="fileTableDepartement" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <div id="errorSectionStatDepartements" class="alert alert-danger" style="position: relative; display: none;">
+                                    <span class="closeErrorMsgStatDepartements" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                    <div id="errorMsgStatDepartements"></div>
+                                </div>
+                                {% for elt in data_stat_departement %}
+                                <tr>
+                                    <td>{{ elt }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_fileStatDepartements" title="Supprimer le fichier dans le dossier" data-url="{% url 'delete_file' data_type='stat_departements' file_name=elt %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                          <button 
+                                            type="button" class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_StatDepartements" 
+                                            data-import-type="StatDepartements"
+                                            title="importer le fichier dans la base" 
+                                            data-filename="{{ elt }}"
+                                        >
+                                            <em class="bi bi-database-fill-add"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier source trouvé</strong> pour departement dans {{ folder_stat_departement }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex mt-2">
+                        <a id="upload-btn-stat_departements" type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'stat_departements' %}">
+                        Ajouter un fichier
+                        </a>
+                        <button id="importButtonStatDepartements" data-url="{% url 'import_db' 'stat_departements' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                            Importer db
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_db_stat_departement %}
+                    <h4 class="text-nowrap overflow-hidden"><strong>Liste de fichiers dans la base de données</strong></h4>
+                    <div>
+                        <table id="fileTableDepartementData" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_db_stat_departement %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bdStatDepartements" 
+                                            title="Supprimer dans la base de données" 
+                                            data-url="{% url 'delete_file_db' data_type='stat_departements' file_name=elt.filename %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_stat_departements"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_stat_departement }}"
+                            data-type="stat_departements"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier trouvé dans la base de données</strong>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="text-primary my-3">
+        Statistiques couverture region
+        <em class="bi bi-info-circle-fill info_button_stat_region" style="cursor: pointer;"></em>
+    </h3>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_stat_region %}
+                    <h4>
+                        <strong>Liste de fichiers dans le dossier</strong>
+                        <span class="" style="font-weight: 100; font-size: 17px">{{ folder_stat_region }}</span>
+                    </h4>
+                    <div>
+                        <table id="fileTableRegion" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <div id="errorSectionStatRegions" class="alert alert-danger" style="position: relative; display: none;">
+                                    <span class="closeErrorMsgStatRegions" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                    <div id="errorMsgStatRegions"></div>
+                                </div>
+                                {% for elt in data_stat_region %}
+                                <tr>
+                                    <td>{{ elt }}</td>
+                                    <td>
+                                        
+                                        <button type="button" class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_fileStatRegions" title="Supprimer le fichier dans le dossier" data-url="{% url 'delete_file' data_type='stat_regions' file_name=elt %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                          <button 
+                                            type="button" class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_StatRegions" 
+                                            data-import-type="StatRegions"
+                                            title="importer le fichier dans la base" 
+                                            data-filename="{{ elt }}"
+                                        >
+                                            <em class="bi bi-database-fill-add"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div>
+                        <p><strong>Aucun fichier source trouvé</strong> pour region dans {{ folder_stat_region }}</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex mt-2">
+                        <a id="upload-btn-stat_regions" type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'stat_regions' %}">
+                        Ajouter un fichier
+                        </a>
+                        <button id="importButtonStatRegions" data-url="{% url 'import_db' 'stat_regions' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                            Importer db
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_db_stat_region %}
+                    <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                    <div>
+                        <table id="fileTableRegionData" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_db_stat_region %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bdStatRegions" 
+                                            title="Supprimer dans la base de données" 
+                                            data-url="{% url 'delete_file_db' data_type='stat_regions' file_name=elt.filename %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_stat_regions"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_stat_region }}"
+                            data-type="stat_regions"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier trouvé dans la base de données</strong>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="text-primary my-3">
+        Statistiques couverture territoire
+        <em class="bi bi-info-circle-fill info_button_stat_territoire" style="cursor: pointer;"></em>
+    </h3>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_stat_territoire %}
+                    <h4>
+                        <strong>Liste de fichiers dans le dossier</strong>
+                        <span class="" style="font-weight: 100; font-size: 17px">{{ folder_stat_territoire }}</span>
+                    </h4>
+                    <div>
+                        <table id="fileTableTerritoire" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <div id="errorSectionStatTerritoires" class="alert alert-danger" style="position: relative; display: none;">
+                                    <span class="closeErrorMsgStatTerritoires" aria-hidden="true" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font-size: 24px;">&times;</span>
+                                    <div id="errorMsgStatTerritoires"></div>
+                                </div>
+                                {% for elt in data_stat_territoire %}
+                                <tr>
+                                    <td>{{ elt }}</td>
+                                    <td>
+                                          <button type="button" class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_fileStatTerritoires" title="Supprimer le fichier dans le dossier" data-url="{% url 'delete_file' data_type='stat_territoires' file_name=elt %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                          <button 
+                                            type="button" class="btn btn-sm btn-success rounded-pill shadow mr-4 import_file_StatTerritoires" 
+                                            data-import-type="StatTerritoires"
+                                            title="importer le fichier dans la base" 
+                                            data-filename="{{ elt }}"
+                                        >
+                                            <em class="bi bi-database-fill-add"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier source trouvé</strong> pour territoire dans {{ folder_stat_territoire }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex mt-2">
+                        <a id="upload-btn-stat_territoires" type="button" class="btn btn-success rounded-pill shadow  mr-4" href="{% url 'upload' 'stat_territoires' %}">
+                        Ajouter un fichier
+                        </a>
+                        <button id="importButtonStatTerritoires" data-url="{% url 'import_db' 'stat_territoires' %}" type="button" class="btn btn-warning rounded-pill shadow" >
+                            Importer db
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="shadow card">
+                <div class="card-body">
+                    {% if data_db_stat_territoire %}
+                    <h4><strong>Liste de fichiers dans la base de données</strong></h4>
+                    <div>
+                        <table id="fileTableTerritoireData" data-order='[[ 0, "asc" ]]'>
+                            <thead>
+                                <tr class="bg-light">
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Nom du fichier</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for elt in data_db_stat_territoire %}
+                                <tr>
+                                    <td>{{ elt.nb }}</td>
+                                    <td>{{ elt.filename }}</td>
+                                    <td>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-danger rounded-pill shadow mr-4 delete_bdStatTerritoires" 
+                                            title="Supprimer dans la base de données" 
+                                            data-url="{% url 'delete_file_db' data_type='stat_territoires' file_name=elt.filename %}">
+                                            <em class="bi bi-trash"></em>
+                                          </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button
+                            id="deleteAll_stat_territoires"
+                            type="button"
+                            class="btn btn-danger rounded-pill shadow"
+                            data-tablename="{{ table_name_stat_territoire }}"
+                            data-type="stat_territoires"
+                            data-url="{% url 'deleteall' %}"
+                        >
+                            Tout supprimer
+                        </button>
+                    </div>
+                    {% else %}
+                    <div>
+                        <p>
+                            <strong>Aucun fichier trouvé dans la base de données</strong>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+html[data-theme='deuteranomalie'] {
+  --color-primary: #106a74;
+  --color-secondary: #b9e6e8;
+  --color-info: #67888e;
+  --violet-10: #7abec7;
+  --violet-20: #224953;
+  --grey-20: #d5d5d5;
+  --stone-10: #f7f6f1;
+  --stone-20: #f1ede6;
+  --stone-30: #f0e5d3;
+  --primary-500: #79969d;
+  --greenTheme-500: #106074;
+  --greenTheme-100: #8feeff;
+  --violetTheme-500: #7abac8;
+  --violetTheme-100: #b6f0ff;
+  --primary-200: #d0e3e7;
+  --purple-20: #ccf6ff;
+  --bleu-02: #08758e;
+}

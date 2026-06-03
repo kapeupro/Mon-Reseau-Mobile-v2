@@ -1,0 +1,17 @@
+meta {
+  name: Get departement
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/featureserv/collections/mrm_last.departement_light/items.json?limit=5&properties=nom,gid&filter=nom%20ILIKE%20%27Gu%25%27
+  body: none
+  auth: none
+}
+
+query {
+  limit: 5
+  properties: nom,gid
+  filter: nom%20ILIKE%20%27Gu%25%27
+}

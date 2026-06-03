@@ -1,0 +1,15 @@
+meta {
+  name: Get region
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/featureserv/collections/mrm_last.region/items/1.json?properties=nom
+  body: none
+  auth: none
+}
+
+query {
+  properties: nom
+}

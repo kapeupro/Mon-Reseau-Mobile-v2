@@ -1,0 +1,62 @@
+#pyproject.toml
+[project]
+name = "monreseaumobile"
+version = "1.0.0"
+requires-python = ">=3.12"
+authors = [
+    {name = "Neogeo Technologies"}
+]
+
+[tool.coverage.run]
+
+omit = [
+  "*/tests/*",
+  "*/migrations/*",
+  "*/settings/*",
+  "*/docker/*",
+  "wsgi.py"
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+#output-format = "gitlab"
+
+
+[tool.ruff.lint]
+# Only ignore variables named "_".
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|sender|instance|request)$"
+
+select = [
+    "ALL", # include all the rules, including new ones
+]
+
+ignore = [
+    #### modules
+    "ANN", # flake8-annotations
+    "C90", # mccabe complexity
+    "EXE", # flake8-executable
+    "DJ",  # django
+
+
+    "COM812", # trailing comas. Conflict when using ruff format
+    "D100",   # ignore missing docs
+    "D101",
+    "D102",
+    "D104",
+    "D106",
+    "D200",
+    "D203",
+    "D205",
+    "D212",
+    "D400",
+    "D401",
+    "TRY003", # external messages in exceptions are too verbose
+]
+
+[tool.ruff.lint.per-file-ignores]
+"manage.py" = [
+    "EM101",
+    "PLC0415"
+
+]

@@ -1,0 +1,16 @@
+meta {
+  name: Get communes
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/featureserv/collections/mrm_last.commune_light/items.json?limit=30&properties=nom,gid
+  body: none
+  auth: none
+}
+
+query {
+  limit: 30
+  properties: nom,gid
+}
