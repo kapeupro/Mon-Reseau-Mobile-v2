@@ -84,7 +84,7 @@ disponibles par opérateur et par technologie (2G / 3G / 4G) :
 
 ---
 
-## 🖼️ Captures et démonstration
+## 🖼️ Captures d'écran
 
 <table style="width:100%; table-layout:fixed">
   <tr>
@@ -104,7 +104,33 @@ disponibles par opérateur et par technologie (2G / 3G / 4G) :
 </table>
 
 Accéder à l'application : **<https://monreseaumobile.arcep.fr/>**  
-Démonstration de l'application : _à venir_
+
+---
+
+## 📜 Licences
+
+- **Code source** : publié sous **GNU GPL-3.0**. Voir [`LICENSE`](LICENSE).
+- **Données** : Les jeux de données sont sous licence ouverte (voir le détail sur la page de chacun sur data.gouv.fr) 
+- **Marques et logos** (« Mon réseau mobile », Arcep) : protégés, exclus de la licence du code
+  et non réutilisables sans autorisation.
+
+---
+
+## 🧰 Pile technique
+
+---
+
+- **Cartographie** : MapLibre GL JS, pg_tileserv, tuiles vectorielles.
+- **Front-end** : Next.js, Tailwind.
+- **Back-end** : Django.
+- **Données géospatiales** : PostgreSQL + PostGIS.
+- **Conteneurisation & déploiement** : Docker, Ansible.
+
+---
+
+## 🏗️ Architecture
+
+<img src="docs/stack.png" alt="Architecture">
 
 ---
 
@@ -121,26 +147,8 @@ opérateurs. Les principales sources publiques réutilisables sont :
 | Zones à couvrir | Arcep / Gouvernement | [data.arcep.fr](https://data.arcep.fr/mobile/dispositif_couverture_ciblee/) |
 | Signalements consommateurs | Arcep (« J'alerte l'Arcep ») | Non disponibles |
 
-Les jeux de données sont, sauf mention contraire, publiés sous **Licence Ouverte / Open Licence 1.0**
-(Etalab). Vérifiez la licence propre à chaque jeu de données avant toute réutilisation.
-
----
-
-## 🏗️ Architecture
-
-
-<img src="docs/stack.png" alt="Architecture">
-
-
-## 🧰 Pile technique
-
----
-
-- **Cartographie** : MapLibre GL JS, pg_tileserv, tuiles vectorielles.
-- **Front-end** : Next.js, Tailwind.
-- **Back-end** : Django.
-- **Données géospatiales** : PostgreSQL + PostGIS.
-- **Conteneurisation & déploiement** : Docker, Ansible.
+Les jeux de données sont sous licence ouverte (voir le détail sur la page de chacun sur data.gouv.fr).
+Vérifiez la licence propre à chaque jeu de données avant toute réutilisation.
 
 ---
 
@@ -156,25 +164,15 @@ textuelles, ARIA) ni la sobriété (poids des assets, requêtes réseau).
 ## 🔐 Sécurité
 
 Merci de **ne pas** divulguer publiquement une faille de sécurité dans une issue.
-Signalez-la de manière responsable via le canal indiqué dans [`SECURITY.md`](docs/SECURITY.md) ou
+Signalez-la de manière responsable via le canal indiqué dans [`/docs/SECURITY.md`](docs/SECURITY.md) ou
 via l'adresse de contact ci-dessous. 
 
-Adresse de contact : consommateurs@arcep.fr
+Adresse de contact : opendata@arcep.fr
 
-**Mon reseau mobile** fait l'objet d'audit de sécurité réguliers et s'inscrit dans la 
+**Mon reseau mobile** fait l'objet d'audits de sécurité réguliers et s'inscrit dans la 
 démarche de sécurisation des systèmes d'informations proposée par l'ANSSI (Agence nationale 
 de la sécurité des systèmes d'information) via [MonServiceSécurisé](https://monservicesecurise.cyber.gouv.fr/).
 Néanmoins, des failles peuvent subsister. 
-
----
-
-## 📜 Licences
-
-- **Code source** : publié sous **GNU GPL-3.0**. Voir [`LICENSE`](LICENSE).
-- **Données** : **Licence Ouverte / Open Licence 1.0** (Etalab), sauf mention contraire propre
-  à chaque jeu de données.
-- **Marques et logos** (« Mon réseau mobile », Arcep) : protégés, exclus de la licence du code
-  et non réutilisables sans autorisation.
 
 ---
 
@@ -185,7 +183,7 @@ Néanmoins, des failles peuvent subsister.
 - **Service en ligne** : <https://monreseaumobile.arcep.fr/>
 - **Page d'information** :
   [Comment utiliser « Mon réseau mobile » ?](https://www.arcep.fr/mes-demarches-et-services/consommateurs/fiches-pratiques/comment-utiliser-mon-reseau-mobile.html)
-- **Contact** : <https://www.arcep.fr/nous-contacter.html>
+- **Contact** : opendata@arcep.fr
 
 <div align="center">
 

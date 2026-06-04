@@ -16,7 +16,7 @@ Vous disposez de deux canaux, par ordre de préférence :
    confidentiel entre vous et l'équipe, au sein de GitHub.
 
 2. **Par courriel**
-   Écrivez à **consommateurs@arcep.fr**.
+   Écrivez à **opendata@arcep.fr**.
    Si possible, chiffrez votre message.
 
 ### Informations utiles à fournir
