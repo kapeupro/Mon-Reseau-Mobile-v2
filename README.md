@@ -181,7 +181,7 @@ Néanmoins, des failles peuvent subsister.
 
 ## 🏛️ Qui sommes-nous ?
 
-L’Arcep, c’est « l’Autorité de régulation des communications électroniques, des postes et de la distribution de la presse » : elle veille à l’accès au numérique en France, partout, pour tous et pour longtemps. Elle conduit les opérateurs à concilier leurs intérêts économiques avec des objectifs d’intérêt général.
+L’Arcep, c’est « _l’Autorité de régulation des communications électroniques, des postes et de la distribution de la presse_ » : elle veille à l’accès au numérique en France, partout, pour tous et pour longtemps. Elle conduit les opérateurs à concilier leurs intérêts économiques avec des objectifs d’intérêt général.
 
 **Pourquoi ?** Parce que l’accès à la fibre, la 4G ou la 5G, à un choix de services numériques de qualité et durables, à des prix justes sur tout le territoire, est devenu essentiel pour les citoyens et les entreprises. 
 
