@@ -135,6 +135,7 @@ function featureToRow(feature: GeoJsonFeature, observedDate: string): OutageRow 
   // in a real raw{date}.geojson. Candidates below cover the likely Arcep/ANFR forms.
   const sourceSiteId =
     pick(props, [
+      "station_anfr", // VERIFIED real column in raw{date}.geojson (2026-06-23)
       "id_site",
       "site_id",
       "id_station_anfr",

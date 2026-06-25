@@ -79,7 +79,7 @@ interface PoiRow {
 // data.gouv resource resolution + download
 // ---------------------------------------------------------------------------
 
-async function resolveLatestCsvUrl(slug: string): Promise<string> {
+async function resolveLatestCsvUrl(slug: string, prefer?: RegExp): Promise<string> {
   const api = `${DATAGOUV_API}/datasets/${slug}/`;
   const resp = await fetch(api, { headers: { Accept: "application/json" } });
   if (!resp.ok) {
@@ -115,8 +115,13 @@ async function resolveLatestCsvUrl(slug: string): Promise<string> {
         `[${resources.map((r) => `${r.title}:${r.format}`).join(", ")}]. TODO: pin URL.`,
     );
   }
-  console.log(`[poi] ${slug}: using ${csv[0]!.url}`);
-  return csv[0]!.url;
+  // Optional resource preference (e.g. FINESS: the GEOLOCATED export cs1100507,
+  // which carries the geolocalisation records, NOT the coordinate-less cs1100502).
+  const chosen =
+    (prefer ? csv.find((r) => prefer.test(r.url) || prefer.test(r.title ?? "")) : undefined) ??
+    csv[0]!;
+  console.log(`[poi] ${slug}: using ${chosen.url}`);
+  return chosen.url;
 }
 
 /** Fetch + decode. Police/gendarmerie are usually UTF-8; FINESS is often latin1. */
@@ -166,7 +171,6 @@ const FINESS_HOSPITAL_LABEL_NEEDLES = [
   "chu",
   "chr",
   "urgence",
-  "soins",
   "clinique",
 ];
 
@@ -316,13 +320,15 @@ function gendarmerieRowToPoi(row: Row, index: number): PoiRow | null {
   if (!isPlausibleLonLat(lon, lat)) return null;
 
   const sourceId =
-    pick(row, ["identifiant", "id", "code_unite", "code", "matricule"], {
+    pick(row, ["identifiant_public_unite", "identifiant", "id", "code_unite", "code", "matricule"], {
       context: "gendarmerie source_id",
       todo: false,
     }) ?? `gendarmerie-${index}`;
 
+  // VERIFIED (2026-06-25): unit name is the "service" column; "adresse_geographique"
+  // is the address. No "libelle_unite" column exists in the real export.
   const name =
-    pick(row, ["libelle_unite", "nom", "libelle", "unite", "designation"], {
+    pick(row, ["service", "libelle_unite", "nom", "libelle", "unite", "designation"], {
       context: "gendarmerie name",
     }) ?? "Unité de gendarmerie";
 
@@ -350,21 +356,99 @@ function gendarmerieRowToPoi(row: Row, index: number): PoiRow | null {
 }
 
 // ---------------------------------------------------------------------------
+// FINESS custom parser — the etalab "stock" file has NO header and TWO record
+// types: "structureet" (identity/category/address) and "geolocalisation"
+// (Lambert 93 coords). Join by nofinesset, keep only hospitals (label match)
+// that have coordinates, emit PoiRow with lon/lat = Lambert X/Y (inserted as
+// EPSG:2154 via SOURCE_CONFIG.finess.srid). Field layout VERIFIED on the
+// 2026-05-12 extract:
+//   structureet;nofinesset(1);nofinessej(2);rs(3);rslongue(4);..;numvoie(7);
+//     typvoie(8);voie(9);..;commune(12);departement(13);..;ligneacheminement(15);
+//     ..;categetab(18);libcategetab(19);categagretab(20);libcategagretab(21);..
+//   geolocalisation;nofinesset(1);coordxet(2);coordyet(3);sourcecoordet(4);datemaj(5)
+// ---------------------------------------------------------------------------
+function parseFiness(csvText: string): PoiRow[] {
+  const geo = new Map<string, { x: number; y: number }>();
+  interface Estab {
+    id: string;
+    name: string;
+    libcat: string;
+    dept: string;
+    commune: string;
+    address: string | null;
+  }
+  const estabs: Estab[] = [];
+
+  for (const raw of csvText.split(/\r?\n/)) {
+    if (!raw) continue;
+    const f = raw.split(";");
+    if (f[0] === "geolocalisation") {
+      const id = (f[1] ?? "").trim();
+      const x = Number((f[2] ?? "").replace(",", "."));
+      const y = Number((f[3] ?? "").replace(",", "."));
+      if (id && Number.isFinite(x) && Number.isFinite(y)) geo.set(id, { x, y });
+    } else if (f[0] === "structureet") {
+      const id = (f[1] ?? "").trim();
+      if (!id) continue;
+      const street = [f[7] ?? "", f[8] ?? "", f[9] ?? ""].map((s) => s.trim()).filter(Boolean).join(" ");
+      const ligne = (f[15] ?? "").trim();
+      const address = [street, ligne].filter(Boolean).join(", ") || null;
+      estabs.push({
+        id,
+        name: (f[4] ?? "").trim() || (f[3] ?? "").trim() || `Etablissement ${id}`,
+        libcat: (f[19] ?? "").trim(),
+        dept: (f[13] ?? "").trim(),
+        commune: (f[12] ?? "").trim(),
+        address,
+      });
+    }
+  }
+
+  const rows: PoiRow[] = [];
+  for (const e of estabs) {
+    const lc = e.libcat.toLowerCase();
+    if (!FINESS_HOSPITAL_LABEL_NEEDLES.some((n) => lc.includes(n))) continue; // hospital filter
+    const g = geo.get(e.id);
+    if (!g) continue; // no coordinates -> cannot place on the map
+    // Lambert 93 métropole plausibility: X in ~[0,1.3e6], Y in ~[6.0e6,7.3e6].
+    if (!(g.x > 0 && g.x < 1_300_000 && g.y > 6_000_000 && g.y < 7_300_000)) continue;
+    const insee = e.dept && e.commune ? `${e.dept}${e.commune.padStart(3, "0")}` : null;
+    rows.push({
+      source: "finess",
+      source_id: e.id,
+      name: e.name,
+      category: "sante",
+      subcategory: "hopital",
+      address: e.address,
+      insee_com: insee,
+      lon: g.x, // Lambert 93 X (interpreted as EPSG:2154 at insert time)
+      lat: g.y, // Lambert 93 Y
+    });
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
 // Per-source loader config
 // ---------------------------------------------------------------------------
 
 interface SourceConfig {
   delimiter: string;
   encoding: "utf-8" | "latin1";
+  srid: number; // SRID of the source's lon/lat. 4326 for WGS84; 2154 for FINESS Lambert93.
   map: (row: Row, index: number) => PoiRow | null;
+  customParse?: (csvText: string) => PoiRow[]; // bypass header-CSV (FINESS etalab dual-record)
+  resourcePrefer?: RegExp; // pick a specific data.gouv resource (FINESS geolocated cs1100507)
 }
 
 const SOURCE_CONFIG: Record<SourceName, SourceConfig> = {
-  // FINESS is historically latin1 and semicolon-delimited.
-  finess: { delimiter: ";", encoding: "latin1", map: (r) => finessRowToPoi(r) },
-  // Min. Intérieur / gendarmerie are usually UTF-8 + semicolon. Confirm on file.
-  police: { delimiter: ";", encoding: "utf-8", map: policeRowToPoi },
-  gendarmerie: { delimiter: ";", encoding: "utf-8", map: gendarmerieRowToPoi },
+  // FINESS "etalab stock": latin1, semicolon, NO header, dual record types, coords
+  // in Lambert 93 (2154). Handled by parseFiness, not the generic header parser.
+  // The geolocated extract (cs1100507) is UTF-8 (the legacy stock file was latin1).
+  finess: { delimiter: ";", encoding: "utf-8", srid: 2154, map: (r) => finessRowToPoi(r), customParse: parseFiness, resourcePrefer: /1100507|g[eé]olocalis/i },
+  // Min. Intérieur / gendarmerie: UTF-8 + semicolon, header CSV, WGS84 GPS columns.
+  police: { delimiter: ";", encoding: "utf-8", srid: 4326, map: policeRowToPoi },
+  gendarmerie: { delimiter: ";", encoding: "utf-8", srid: 4326, map: gendarmerieRowToPoi },
 };
 
 // ---------------------------------------------------------------------------
@@ -373,20 +457,27 @@ const SOURCE_CONFIG: Record<SourceName, SourceConfig> = {
 
 async function loadSource(source: SourceName, csvText: string): Promise<number> {
   const cfg = SOURCE_CONFIG[source];
-  const records = parseCsv(csvText, cfg.delimiter);
-  console.log(`[poi] ${source}: parsed ${records.length} rows.`);
 
-  const rows: PoiRow[] = [];
-  let skipped = 0;
-  records.forEach((rec, i) => {
-    const poi = cfg.map(rec, i);
-    if (poi === null) {
-      skipped++;
-      return;
-    }
-    rows.push(poi);
-  });
-  console.log(`[poi] ${source}: kept ${rows.length} (skipped/filtered ${skipped}).`);
+  let rows: PoiRow[];
+  if (cfg.customParse) {
+    // Non-tabular sources (FINESS etalab) parse straight to PoiRow[].
+    rows = cfg.customParse(csvText);
+    console.log(`[poi] ${source}: parsed ${rows.length} hospital rows (custom etalab parser).`);
+  } else {
+    const records = parseCsv(csvText, cfg.delimiter);
+    console.log(`[poi] ${source}: parsed ${records.length} rows.`);
+    rows = [];
+    let skipped = 0;
+    records.forEach((rec, i) => {
+      const poi = cfg.map(rec, i);
+      if (poi === null) {
+        skipped++;
+        return;
+      }
+      rows.push(poi);
+    });
+    console.log(`[poi] ${source}: kept ${rows.length} (skipped/filtered ${skipped}).`);
+  }
 
   if (rows.length === 0) {
     console.warn(
@@ -409,8 +500,8 @@ async function loadSource(source: SourceName, csvText: string): Promise<number> 
           (source, source_id, name, category, subcategory, address, insee_com, geom)
         SELECT
           x.source, x.source_id, x.name, x.category, x.subcategory, x.address, x.insee_com,
-          -- GEO LAW: WGS84 -> Lambert 93 (EPSG:2154)
-          ST_Transform(ST_SetSRID(ST_MakePoint(x.lon, x.lat), 4326), 2154)
+          -- GEO LAW: source SRID (4326 WGS84, or 2154 for FINESS Lambert) -> 2154
+          ST_Transform(ST_SetSRID(ST_MakePoint(x.lon, x.lat), ${cfg.srid}::int), 2154)
         -- tx.json() binds the batch as one jsonb value (NOT pre-stringified +
         -- ::jsonb, which double-encodes and breaks jsonb_to_recordset).
         -- jsonParam() widens the typed array to porsager's JSONValue (see pick.ts).
@@ -451,7 +542,7 @@ async function obtainCsv(
     const buf = await Bun.file(local).arrayBuffer();
     return decodeBytes(new Uint8Array(buf), cfg.encoding);
   }
-  const url = await resolveLatestCsvUrl(SLUGS[source]);
+  const url = await resolveLatestCsvUrl(SLUGS[source], cfg.resourcePrefer);
   return fetchCsvText(url, cfg.encoding);
 }
 
