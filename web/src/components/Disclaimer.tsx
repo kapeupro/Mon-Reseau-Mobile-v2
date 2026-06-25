@@ -11,12 +11,14 @@ export default function Disclaimer() {
   return (
     <footer className="disclaimer">
       <p className="disclaimer__main">
-        <strong>Avertissement —</strong> Le score de résilience est un indicateur{" "}
-        <em>dérivé</em> calculé à partir de données ouvertes (Arcep, ANFR,
-        data.gouv.fr). Les cartes de couverture Arcep sont{" "}
-        <strong>simulées, indicatives et non contractuelles</strong> (le terrain,
-        le bâti, le terminal et la météo influent sur la réception réelle).
-        ResiliaMap n’est pas un produit officiel de l’Arcep.
+        <strong>Méthodologie —</strong> Le score repose sur des données{" "}
+        <strong>factuelles</strong>, pas sur les cartes de couverture simulées : le{" "}
+        <strong>registre ANFR</strong> des sites radio autorisés (&gt; 5 W) et les{" "}
+        <strong>pannes déclarées par les opérateurs</strong>. Seule réserve : la
+        présence d’une antenne 4G à proximité ne garantit pas la réception réelle
+        (propagation, bâti, terminal) — le score mesure la robustesse de
+        l’infrastructure, pas la qualité de service. ResiliaMap n’est pas un
+        produit officiel de l’Arcep.
       </p>
       <p className="disclaimer__sources">
         Sources : Arcep « sites indisponibles », ANFR (installations &gt; 5 W),

@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResiliaMap — La résilience réseau des lieux critiques</title>
+    <meta
+      name="description"
+      content="ResiliaMap cartographie la résilience réseau mobile des hôpitaux, gendarmeries et commissariats — à partir de données factuelles (registre ANFR, pannes déclarées), pas de cartes de couverture simulées."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- ====================== NAV ====================== -->
+    <header class="nav">
+      <a class="nav__brand" href="#top">
+        <span class="nav__mark" aria-hidden="true">
+          <span class="nav__ring"></span><span class="nav__cross">+</span>
+        </span>
+        Resilia<span class="nav__brand-accent">Map</span>
+      </a>
+      <nav class="nav__links" aria-label="Sections">
+        <a href="#constat">Le constat</a>
+        <a href="#methode">La méthode</a>
+        <a href="#factuel">Factuel&nbsp;?</a>
+        <a href="#pourqui">Pour qui</a>
+      </nav>
+      <a class="btn btn--solid nav__cta" href="http://localhost:5173/">Explorer la carte</a>
+    </header>
+
+    <!-- ====================== HERO ====================== -->
+    <section class="hero" id="top">
+      <div class="hero__grid">
+        <div class="hero__copy">
+          <p class="eyebrow">Civic-tech · open data factuelle</p>
+          <h1 class="hero__title">
+            Les lieux critiques aussi&nbsp;<span class="u-red">tombent en zone&nbsp;blanche.</span>
+          </h1>
+          <p class="hero__sub">
+            Un hôpital, une gendarmerie, un commissariat — sans réseau mobile à
+            proximité, c'est une continuité de service qui flanche. ResiliaMap
+            mesure cette fragilité&nbsp;: combien d'opérateurs couvrent vraiment
+            chaque lieu, quels sont les points uniques de défaillance, et où
+            tombent les pannes.
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--solid" href="http://localhost:5173/">Explorer la carte →</a>
+            <a class="btn btn--ghost" href="#methode">Comment c'est calculé</a>
+          </div>
+          <p class="hero__note">
+            Sur données <strong>factuelles</strong> — registre ANFR des antennes
+            autorisées et pannes déclarées par les opérateurs. Pas de couverture
+            simulée.
+          </p>
+        </div>
+
+        <!-- SIGNATURE: the white-zone. A hospital alone inside a 3 km radius
+             with no 4G site, while antennas cluster outside it. -->
+        <figure class="zone" aria-label="Schéma : un hôpital en zone blanche, aucune antenne 4G dans un rayon de 3 km">
+          <svg viewBox="0 0 420 420" class="zone__svg" role="img">
+            <defs>
+              <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#d7191c" stop-opacity="0.22" />
+                <stop offset="70%" stop-color="#d7191c" stop-opacity="0.05" />
+                <stop offset="100%" stop-color="#d7191c" stop-opacity="0" />
+              </radialGradient>
+              <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+                <path d="M28 0H0V28" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1" />
+              </pattern>
+            </defs>
+
+            <rect x="0" y="0" width="420" height="420" fill="url(#grid)" />
+
+            <!-- antennas OUTSIDE the white zone (operator colors) -->
+            <g class="zone__sites">
+              <circle class="dot" style="--c:#ff8700" cx="58" cy="64" r="5" />
+              <circle class="dot" style="--c:#3dd0ff" cx="360" cy="92" r="5" />
+              <circle class="dot" style="--c:#b54241" cx="386" cy="300" r="5" />
+              <circle class="dot" style="--c:#4be1bb" cx="78" cy="356" r="5" />
+              <circle class="dot" style="--c:#3dd0ff" cx="42" cy="210" r="5" />
+              <circle class="dot" style="--c:#ff8700" cx="388" cy="178" r="5" />
+            </g>
+
+            <!-- the 3 km coverage radius around the stranded hospital -->
+            <circle cx="210" cy="210" r="150" fill="url(#halo)" />
+            <circle class="zone__ring zone__ring--3" cx="210" cy="210" r="150" />
+            <circle class="zone__ring zone__ring--2" cx="210" cy="210" r="104" />
+            <circle class="zone__ring zone__ring--1" cx="210" cy="210" r="58" />
+
+            <!-- radius label -->
+            <line class="zone__rule" x1="210" y1="210" x2="360" y2="210" />
+            <text class="zone__rlabel" x="284" y="200">3&nbsp;km · 0 site 4G</text>
+
+            <!-- the hospital in the white zone -->
+            <g class="zone__poi">
+              <circle class="zone__poi-pulse" cx="210" cy="210" r="22" />
+              <rect x="196" y="196" width="28" height="28" rx="6" fill="#d7191c" />
+              <path d="M210 201v18M201 210h18" stroke="#fff" stroke-width="3.4" stroke-linecap="round" />
+            </g>
+          </svg>
+          <figcaption class="zone__cap">
+            <span class="zone__cap-tag">Zone blanche</span>
+            Aucun site 4G dans un rayon de 3&nbsp;km — score 0.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ====================== CONSTAT (stats) ====================== -->
+    <section class="constat" id="constat">
+      <div class="section-head">
+        <p class="eyebrow">Le constat · métropole</p>
+        <h2 class="section-title">Ce que disent les données réelles</h2>
+      </div>
+      <ul class="stats" role="list">
+        <li class="stat">
+          <span class="stat__num u-ink">7&nbsp;058</span>
+          <span class="stat__label">lieux critiques scorés</span>
+        </li>
+        <li class="stat stat--alert">
+          <span class="stat__num u-red">147</span>
+          <span class="stat__label">sans aucun site 4G à 3&nbsp;km</span>
+        </li>
+        <li class="stat stat--alert">
+          <span class="stat__num u-red">11</span>
+          <span class="stat__label">hôpitaux en zone blanche</span>
+        </li>
+        <li class="stat stat--warn">
+          <span class="stat__num u-amber">30</span>
+          <span class="stat__label">points de défaillance unique</span>
+        </li>
+        <li class="stat">
+          <span class="stat__num u-ink">132&nbsp;778</span>
+          <span class="stat__label">antennes 4G analysées (ANFR)</span>
+        </li>
+        <li class="stat">
+          <span class="stat__num u-ink">24&nbsp;599</span>
+          <span class="stat__label">pannes archivées · 23 jours</span>
+        </li>
+      </ul>
+      <p class="constat__foot">
+        Un seul opérateur qui couvre, c'est un point de défaillance unique&nbsp;:
+        sa panne isole le lieu. ResiliaMap rend cette fragilité visible, lieu par
+        lieu et département par département.
+      </p>
+    </section>
+
+    <!-- ====================== MÉTHODE ====================== -->
+    <section class="methode" id="methode">
+      <div class="section-head">
+        <p class="eyebrow">La méthode · de la donnée au score</p>
+        <h2 class="section-title">Trois couches, un score de 0 à 100</h2>
+      </div>
+      <ol class="steps" role="list">
+        <li class="step">
+          <span class="step__n">01</span>
+          <h3 class="step__h">Les antennes</h3>
+          <p class="step__p">
+            On compte, autour de chaque lieu, les sites 4G <strong>actifs par
+            opérateur</strong> dans un rayon de 3&nbsp;km (registre ANFR). Plus
+            d'opérateurs présents = plus de redondance.
+          </p>
+          <div class="step__chips">
+            <span class="chip" style="--c:#ff8700">Orange</span>
+            <span class="chip" style="--c:#b54241">SFR</span>
+            <span class="chip" style="--c:#3dd0ff">Bouygues</span>
+            <span class="chip" style="--c:#4be1bb">Free</span>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step__n">02</span>
+          <h3 class="step__h">Les pannes</h3>
+          <p class="step__p">
+            On <strong>archive chaque jour</strong> le flux des sites
+            indisponibles que l'Arcep ne conserve pas, et on pénalise les lieux
+            entourés de pannes récentes (fenêtre 90&nbsp;jours, décroissance dans
+            le temps).
+          </p>
+          <div class="spark" aria-hidden="true">
+            <span style="height:30%"></span><span style="height:55%"></span>
+            <span style="height:40%"></span><span style="height:70%"></span>
+            <span style="height:48%"></span><span style="height:62%"></span>
+            <span style="height:35%"></span><span style="height:80%"></span>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step__n">03</span>
+          <h3 class="step__h">Le score</h3>
+          <p class="step__p">
+            Redondance opérateurs <span class="op op--p">＋</span> moins le malus
+            <em>défaillance unique</em> <span class="op op--m">－</span> moins le
+            malus <em>pannes proches</em>. Résultat&nbsp;: 0 (très fragile) à 100
+            (résilient).
+          </p>
+          <div class="ramp" aria-hidden="true">
+            <span style="background:#d7191c"></span>
+            <span style="background:#fdae61"></span>
+            <span style="background:#ffffbf"></span>
+            <span style="background:#a6d96a"></span>
+            <span style="background:#1a9641"></span>
+          </div>
+          <p class="ramp__labels"><span>0 · fragile</span><span>100 · résilient</span></p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ====================== FACTUEL, PAS SIMULÉ ====================== -->
+    <section class="factuel" id="factuel">
+      <div class="factuel__grid">
+        <div class="factuel__head">
+          <p class="eyebrow eyebrow--light">La différence</p>
+          <h2 class="section-title section-title--light">
+            Factuel,<br />pas simulé.
+          </h2>
+          <p class="factuel__lead">
+            La plupart des outils s'appuient sur les <em>cartes de couverture
+            théoriques</em> de l'Arcep — explicitement « simulées, indicatives,
+            non contractuelles ». ResiliaMap, non.
+          </p>
+        </div>
+        <ul class="claims" role="list">
+          <li class="claim">
+            <span class="claim__tag claim__tag--ok">Registre ANFR</span>
+            <p>
+              La localisation des antennes vient du <strong>registre officiel des
+              installations radioélectriques autorisées</strong> (&gt; 5 W). C'est
+              un fait réglementaire, pas une estimation.
+            </p>
+          </li>
+          <li class="claim">
+            <span class="claim__tag claim__tag--ok">Pannes déclarées</span>
+            <p>
+              Les indisponibilités sont celles que <strong>les opérateurs
+              déclarent eux-mêmes</strong>, jour après jour. Du déclaratif,
+              horodaté et archivé.
+            </p>
+          </li>
+          <li class="claim">
+            <span class="claim__tag claim__tag--warn">La seule réserve</span>
+            <p>
+              Une antenne à 3&nbsp;km <strong>ne garantit pas</strong> la
+              réception (propagation, bâti, terminal). Le score mesure la
+              robustesse de l'<em>infrastructure</em>, pas la qualité de service
+              ressentie.
+            </p>
+          </li>
+          <li class="claim claim--next">
+            <span class="claim__tag claim__tag--next">Vers l'opposable</span>
+            <p>
+              Prochaine étape&nbsp;: croiser les lieux avec les
+              <strong>engagements contraignants du New Deal Mobile</strong> (zones
+              à couvrir sous délai légal). Là où un opérateur est <em>tenu</em> de
+              couvrir — et en retard — la fragilité devient un manquement opposable.
+            </p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ====================== POUR QUI ====================== -->
+    <section class="pourqui" id="pourqui">
+      <div class="section-head">
+        <p class="eyebrow">Pour qui</p>
+        <h2 class="section-title">Un outil pour ceux qui décident — et ceux qui vérifient</h2>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <h3 class="card__h">Élus &amp; collectivités</h3>
+          <p class="card__p">
+            « Voici les lieux critiques fragiles de mon territoire » — un classement
+            par département pour prioriser l'aménagement numérique et interpeller
+            les opérateurs.
+          </p>
+        </article>
+        <article class="card">
+          <h3 class="card__h">Journalistes</h3>
+          <p class="card__p">
+            Des chiffres sourcés et reproductibles, une carte qui se partage par
+            permalien, et une méthode transparente — de quoi enquêter sans
+            dépendre d'un communiqué.
+          </p>
+        </article>
+        <article class="card">
+          <h3 class="card__h">Citoyens</h3>
+          <p class="card__p">
+            Savoir si l'hôpital, la gendarmerie ou le commissariat près de chez soi
+            tient debout côté réseau — et quels opérateurs y captent vraiment.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ====================== CTA ====================== -->
+    <section class="cta">
+      <h2 class="cta__title">Voir la fragilité, lieu par lieu.</h2>
+      <p class="cta__sub">7 058 lieux critiques, 4 opérateurs, une carte ouverte.</p>
+      <a class="btn btn--solid btn--lg" href="http://localhost:5173/">Explorer la carte →</a>
+    </section>
+
+    <!-- ====================== FOOTER ====================== -->
+    <footer class="foot">
+      <div class="foot__top">
+        <span class="foot__brand">Resilia<span class="nav__brand-accent">Map</span></span>
+        <span class="foot__tag">Résilience réseau des lieux critiques · open data</span>
+      </div>
+      <p class="foot__discl">
+        <strong>Méthodologie —</strong> Le score repose sur des données factuelles
+        (registre ANFR des sites &gt; 5&nbsp;W, pannes déclarées par les
+        opérateurs), pas sur les cartes de couverture simulées. La présence d'une
+        antenne 4G à proximité ne garantit pas la réception réelle&nbsp;: le score
+        mesure la robustesse de l'infrastructure, pas la qualité de service. Seuils
+        (rayon 3&nbsp;km, pondérations) à étalonner sur un département pilote.
+        ResiliaMap n'est pas un produit officiel de l'Arcep.
+      </p>
+      <p class="foot__src">
+        Sources (Licence Ouverte)&nbsp;: ANFR, Arcep « sites indisponibles »,
+        FINESS, services de police et unités de gendarmerie accueillant du public ·
+        Code sous licence
+        <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a>.
+      </p>
+    </footer>
+  </body>
+</html>

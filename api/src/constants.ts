@@ -54,11 +54,16 @@ export function isCategory(v: unknown): v is Category {
 }
 
 /**
- * Mandatory Arcep disclaimer. Coverage / scoring is simulated and indicative,
- * NOT contractual. Shown on every data-bearing API response.
+ * Methodology notice shown on every data-bearing API response.
+ *
+ * IMPORTANT (credibility): the score does NOT use Arcep's "simulated/indicative"
+ * coverage maps. It is built on FACTUAL open data — the ANFR regulatory registry
+ * of authorised radio sites (>5 W) and the operators' OWN declared outages. The
+ * only modelled step is the proximity inference (an antenna nearby does not
+ * guarantee real reception). So we describe the factual basis, not a simulation.
  */
 export const ARCEP_DISCLAIMER =
-  "Couverture simulée/indicative, non contractuelle (Arcep). Score de résilience non calibré : défauts arbitraires à étalonner sur un département pilote.";
+  "Indicateur dérivé de données ouvertes factuelles : registre ANFR des sites radio autorisés (>5 W) et pannes déclarées par les opérateurs. La présence d'une antenne 4G à proximité ne garantit pas la réception réelle (propagation, bâti, terminal) : le score mesure la robustesse de l'infrastructure, pas la qualité de service. Seuils à étalonner ; ResiliaMap n'est pas un produit officiel de l'Arcep.";
 
 /** Default radius (metres, EPSG:2154) advertised in API meta. The DB
  *  score_constants table is the real source of truth; this is read at startup
