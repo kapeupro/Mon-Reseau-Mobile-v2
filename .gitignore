@@ -1,0 +1,24 @@
+# ── ResiliaMap (api/ web/ ingest/) ───────────────────────────────────────────
+# Node / Bun dependencies and build artifacts — never commit these.
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+*.tsbuildinfo
+
+# Local env files (use the *.example committed templates instead)
+.env
+.env.local
+.env.resiliamap
+**/.env
+
+# Ingestion working data (downloaded source files are reproducible)
+ingest/data/raw/*
+!ingest/data/raw/.gitkeep
+
+# Optional theoretical-coverage GeoPackages (pluggable, not redistributed)
+*.gpkg
+
+# Logs / OS noise
+*.log
+.DS_Store

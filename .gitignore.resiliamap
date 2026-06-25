@@ -1,0 +1,31 @@
+# ============================================================================
+# ResiliaMap — .gitignore.resiliamap
+# ----------------------------------------------------------------------------
+# Ignore patterns for ResiliaMap artifacts. The repo root .gitignore is NOT
+# edited destructively. To activate these, append them ONCE:
+#
+#   cat .gitignore.resiliamap >> .gitignore
+#
+# (Documented in README.ResiliaMap.md. Keeping this as a separate file avoids
+# touching the existing Arcep .gitignore.)
+# ============================================================================
+
+# Local secrets / env (never commit)
+.env.resiliamap
+
+# Downloaded raw data (large, regenerable). Keep the dir via .gitkeep.
+ingest/data/raw/**
+!ingest/data/raw/.gitkeep
+
+# Optional theoretical-coverage GeoPackages (pluggable, not redistributed)
+*.gpkg
+
+# Node / Bun
+node_modules/
+api/node_modules/
+web/node_modules/
+ingest/node_modules/
+bun.lockb
+
+# Build output
+web/dist/

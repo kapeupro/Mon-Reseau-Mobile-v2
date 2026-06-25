@@ -1,0 +1,25 @@
+{
+  "name": "resiliamap-ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ResiliaMap ingestion layer (Bun + TypeScript). Loads Arcep/data.gouv layers into PostGIS, reprojecting everything to EPSG:2154. AGPL-3.0-or-later.",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "ingest:pannes": "bun run pannes.ts",
+    "ingest:sites": "bun run sites.ts",
+    "ingest:poi": "bun run poi.ts",
+    "ingest:all": "bun run index.ts",
+    "all": "bun run index.ts",
+    "cron:outages": "bun run pannes.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "csv-parse": "^5.6.0",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.7.2"
+  }
+}

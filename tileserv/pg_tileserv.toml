@@ -1,0 +1,49 @@
+# ============================================================================
+# ResiliaMap — tileserv/pg_tileserv.toml
+# ----------------------------------------------------------------------------
+# pg_tileserv (pramsey/pg_tileserv) configuration.
+#
+# Exposes the POI tile layer (v_poi_tiles, a thin view over mv_resilience_score)
+# and the optional operator_coverage polygons as MVT vector tiles.
+#
+# SRID: source geom in v_poi_tiles is ALREADY reprojected to 4326 (see
+# db/resilience.sql); pg_tileserv tiles in Web Mercator (3857) to match the OSM
+# raster basemap. All METRIC scoring stays server-side in EPSG:2154.
+#
+# SECURITY: point DATABASE_URL at a READ-ONLY role in production. CORS is open
+# here for local dev; restrict CorsOrigins before any public deployment.
+#
+# License: AGPL-3.0-or-later (ResiliaMap new code). See README.ResiliaMap.md.
+# ============================================================================
+
+# DATABASE_URL is taken from the environment (set in docker-compose) and
+# overrides any value here. Left blank intentionally — do not commit secrets.
+# DbConnection = "postgres://resiliamap:changeme@db:5432/resiliamap"
+
+# HTTP listener (container-internal; mapped to TILESERV_HOST_PORT on the host).
+HttpHost = "0.0.0.0"
+HttpPort = 7800
+
+# URL base used when generating TileJSON / capabilities. Behind the web nginx
+# proxy this is rewritten to /tiles; for direct host access use the tileserv URL.
+UrlBase = ""
+
+# CORS — open for local dev. RESTRICT for production deployments.
+CORSOrigins = ["*"]
+
+# Only expose the ResiliaMap layers we explicitly want as tiles. Restricting the
+# schema/whitelist avoids publishing internal tables.
+# pg_tileserv auto-discovers spatial tables/views the role can read; we keep the
+# read-only role limited to: v_poi_tiles, operator_coverage.
+CoordinateSystem.SRID = 3857
+
+# Default tile parameters.
+DefaultResolution = 4096
+DefaultBuffer = 256
+MaxFeaturesPerTile = 50000
+
+# Cache headers (seconds). POI scores change on MV refresh (daily); keep modest.
+CacheTTL = 300
+
+# Quiet, structured logging.
+Debug = false
