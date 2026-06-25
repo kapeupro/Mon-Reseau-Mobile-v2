@@ -177,8 +177,11 @@ export const poiRoutes = new Elysia()
       set.headers["content-type"] = "application/geo+json; charset=utf-8";
       return body;
     } catch (err) {
+      // Log the real cause server-side; never leak internal/DB error text to
+      // the client (information disclosure on a public read-only API).
+      console.error("[poi] error:", err);
       set.status = 500;
-      return { error: "internal_error", detail: String(err instanceof Error ? err.message : err) };
+      return { error: "internal_error" };
     }
   })
 
@@ -334,7 +337,10 @@ export const poiRoutes = new Elysia()
       };
       return body;
     } catch (err) {
+      // Log the real cause server-side; never leak internal/DB error text to
+      // the client (information disclosure on a public read-only API).
+      console.error("[poi] error:", err);
       set.status = 500;
-      return { error: "internal_error", detail: String(err instanceof Error ? err.message : err) };
+      return { error: "internal_error" };
     }
   });

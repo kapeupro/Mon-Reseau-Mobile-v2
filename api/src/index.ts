@@ -59,8 +59,11 @@ const app = new Elysia()
     }
     if (code === "VALIDATION") {
       set.status = 400;
-      return { error: "validation_error", detail: String(error) };
+      return { error: "validation_error" };
     }
+    // Log the real error server-side for observability; the client only ever
+    // gets a generic code (no internal/DB details leaked).
+    console.error("[api] unhandled error:", error);
     set.status = 500;
     return { error: "internal_error" };
   })

@@ -140,7 +140,9 @@ export const statsRoutes = new Elysia().get("/api/stats", async ({ query, set })
     };
     return body;
   } catch (err) {
+    // Log server-side; do not expose internal/DB error details to clients.
+    console.error("[stats] error:", err);
     set.status = 500;
-    return { error: "internal_error", detail: String(err instanceof Error ? err.message : err) };
+    return { error: "internal_error" };
   }
 });
