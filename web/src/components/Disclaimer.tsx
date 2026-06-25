@@ -17,8 +17,9 @@ export default function Disclaimer() {
         <strong>pannes déclarées par les opérateurs</strong>. Seule réserve : la
         présence d’une antenne 4G à proximité ne garantit pas la réception réelle
         (propagation, bâti, terminal) — le score mesure la robustesse de
-        l’infrastructure, pas la qualité de service. ResiliaMap n’est pas un
-        produit officiel de l’Arcep.
+        l’infrastructure, pas la qualité de service. Seuils <strong>étalonnés</strong>{" "}
+        sur la métropole (rayon 3&nbsp;km, redondance opérateurs, instabilité
+        normalisée par densité). ResiliaMap n’est pas un produit officiel de l’Arcep.
       </p>
       <p className="disclaimer__sources">
         Sources : Arcep « sites indisponibles », ANFR (installations &gt; 5 W),

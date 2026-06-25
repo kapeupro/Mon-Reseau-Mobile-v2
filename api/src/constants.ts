@@ -63,7 +63,7 @@ export function isCategory(v: unknown): v is Category {
  * guarantee real reception). So we describe the factual basis, not a simulation.
  */
 export const ARCEP_DISCLAIMER =
-  "Indicateur dérivé de données ouvertes factuelles : registre ANFR des sites radio autorisés (>5 W) et pannes déclarées par les opérateurs. La présence d'une antenne 4G à proximité ne garantit pas la réception réelle (propagation, bâti, terminal) : le score mesure la robustesse de l'infrastructure, pas la qualité de service. Seuils à étalonner ; ResiliaMap n'est pas un produit officiel de l'Arcep.";
+  "Indicateur dérivé de données ouvertes factuelles : registre ANFR des sites radio autorisés (>5 W) et pannes déclarées par les opérateurs. La présence d'une antenne 4G à proximité ne garantit pas la réception réelle (propagation, bâti, terminal) : le score mesure la robustesse de l'infrastructure, pas la qualité de service. Seuils étalonnés sur la métropole (rayon 3 km, redondance opérateurs, instabilité normalisée par densité de sites) ; ResiliaMap n'est pas un produit officiel de l'Arcep.";
 
 /** Default radius (metres, EPSG:2154) advertised in API meta. The DB
  *  score_constants table is the real source of truth; this is read at startup

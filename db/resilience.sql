@@ -167,14 +167,14 @@ INSERT INTO score_constants (key, value, rationale) VALUES
      'Distinct operators at which redundancy saturates to 1.0 (the four métropole MNOs). All four nearby = maximal redundancy.'),
     ('W_REDUNDANCY', 1.0,
      'Weight of the positive redundancy term; dominates so a well-served POI scores high.'),
-    ('W_SPOF_MALUS', 0.25,
-     'Penalty when a single site is the only thing serving the POI (fragile). Below W_REDUNDANCY so it caps, not zeroes, a 1-operator POI.'),
-    ('W_OUTAGE', 0.35,
-     'Weight of recent-outage penalty. W_SPOF_MALUS+W_OUTAGE (0.60) < W_REDUNDANCY so a fully-redundant POI is never driven negative by malus alone.'),
+    ('W_SPOF_MALUS', 0.15,
+     'Penalty when a SINGLE operator serves the POI (its outage isolates the place). CALIBRATED 2026-06-26 on metropole: a 1-operator POI lands ~10/100, a 2-operator ~50 — fragile but not zeroed.'),
+    ('W_OUTAGE', 0.25,
+     'Weight of the recent-outage penalty (a DENSITY-NORMALISED rate, see OUTAGE_SATURATION). Modest: a fully-redundant POI in an outage-prone area still scores ~75. W_SPOF+W_OUTAGE (0.40) < W_REDUNDANCY (1.0).'),
     ('OUTAGE_DECAY_HALFLIFE_DAYS', 30,
      'Half-life (days) for outage time-decay: an outage 30 days ago weighs half of one today. Recent outages matter more.'),
-    ('OUTAGE_SATURATION', 3.0,
-     'decayed_outages value at which the outage malus saturates to 1.0. ~3 recent nearby outages already meaningful.')
+    ('OUTAGE_SATURATION', 1.0,
+     'Saturation of the outage RATE = decayed_outages / nearby_sites. CALIBRATED 2026-06-26 (the rate p95 is ~0.67): a rate of 1 (about one decayed outage per nearby site) maxes the malus. Normalising by site count removes the dense-urban bias where many antennas mechanically imply many nearby outages.')
 ON CONFLICT (key) DO NOTHING;  -- do NOT clobber operator-tuned values on re-run
 
 -- ===========================================================================
@@ -239,10 +239,13 @@ parts AS (
            c.w_red, c.w_spof, c.w_out,
            -- redundancy 0..1 (saturates at full_ops distinct operators)
            LEAST(sv.n_operators::numeric / NULLIF(c.full_ops, 0), 1.0) AS redundancy_norm,
-           -- SPOF: 1 when exactly one serving site (single point of failure), else 0
-           (CASE WHEN sv.n_sites = 1 THEN 1 ELSE 0 END)               AS spof_flag,
-           -- outage penalty 0..1 (saturates at OUTAGE_SATURATION decayed outages)
-           LEAST(ou.decayed_outages / NULLIF(c.out_sat, 0), 1.0)      AS outage_norm
+           -- SPOF: 1 when a SINGLE operator serves the POI — its outage isolates
+           -- the place. Calibrated to operator-level (not site-level) fragility.
+           (CASE WHEN sv.n_operators = 1 THEN 1 ELSE 0 END)           AS spof_flag,
+           -- outage penalty 0..1: DENSITY-NORMALISED rate = decayed outages per
+           -- nearby site, saturating at OUTAGE_SATURATION. Normalising by n_sites
+           -- stops dense areas being penalised merely for hosting many antennas.
+           LEAST((ou.decayed_outages / GREATEST(sv.n_sites, 1)) / NULLIF(c.out_sat, 0), 1.0) AS outage_norm
     FROM critical_poi p
     JOIN serving sv ON sv.poi_id = p.id
     JOIN outages ou ON ou.poi_id = p.id
@@ -273,9 +276,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_mv_resilience_score_poi
 CREATE INDEX IF NOT EXISTS ix_mv_resilience_score_cat
     ON mv_resilience_score (category);
 
--- NOTE on weights: defaults are set so w_red dominates the positive term and
--- (w_spof + w_out) cannot exceed it (1.0 vs 0.60), so a fully-redundant POI is
--- never driven negative by malus alone. Tune in score_constants, NEVER here.
+-- NOTE on weights (calibrated 2026-06-26): w_red dominates the positive term and
+-- (w_spof + w_out) cannot exceed it (1.0 vs 0.40), so a fully-redundant POI is
+-- never driven negative by malus alone. Resulting ramp by operator count:
+-- 0 ops -> 0 (uncovered), 1 -> ~10, 2 -> ~50, 3 -> ~75, 4 -> 85..100 (minus the
+-- density-normalised outage malus). Tune in score_constants, NEVER here.
 
 -- ===========================================================================
 -- 8. v_poi_tiles  (thin read-only view for pg_tileserv; geom emitted as 4326)
