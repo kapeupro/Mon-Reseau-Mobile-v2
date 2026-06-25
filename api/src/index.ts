@@ -19,6 +19,7 @@ import { cors } from "@elysiajs/cors";
 import { healthRoutes } from "./routes/health.ts";
 import { poiRoutes } from "./routes/poi.ts";
 import { statsRoutes } from "./routes/stats.ts";
+import { departmentsRoutes } from "./routes/departments.ts";
 import { closeDb } from "./db.ts";
 import { API_PORT, API_VERSION, ARCEP_DISCLAIMER } from "./constants.ts";
 
@@ -42,15 +43,17 @@ const app = new Elysia()
       "Read-only resilience scoring API for critical POI. All metric math in EPSG:2154; geometry emitted in EPSG:4326.",
     endpoints: [
       "GET /api/health",
-      "GET /api/poi?bbox=minLon,minLat,maxLon,maxLat&category=sante|securite",
+      "GET /api/poi?bbox=minLon,minLat,maxLon,maxLat&category=sante|securite&operator=20801|20810|20820|20815",
       "GET /api/poi/:id",
       "GET /api/stats?category=sante|securite",
+      "GET /api/departments",
     ],
     disclaimer: ARCEP_DISCLAIMER,
   }))
   .use(healthRoutes)
   .use(poiRoutes)
   .use(statsRoutes)
+  .use(departmentsRoutes)
   // Uniform 404 for unknown paths.
   .onError(({ code, set, error }) => {
     if (code === "NOT_FOUND") {

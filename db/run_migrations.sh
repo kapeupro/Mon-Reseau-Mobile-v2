@@ -24,10 +24,12 @@ fi
 
 echo "ResiliaMap: applying schema to ${DB_URL%%@*}@<redacted>"
 
-# Apply in lexical order. 00_extensions.sql first (optional split), then the
-# full schema. Any additional db/*.sql migrations are picked up automatically.
+# Apply in dependency order: 00_extensions.sql first (optional split), then the
+# canonical schema (resilience.sql), then the v2 feature objects (v2_features.sql,
+# which depends on mv_resilience_score / critical_poi / site_outage existing).
+# All three are idempotent, so re-running this script is safe.
 shopt -s nullglob
-for f in "${SCRIPT_DIR}"/00_extensions.sql "${SCRIPT_DIR}"/resilience.sql; do
+for f in "${SCRIPT_DIR}"/00_extensions.sql "${SCRIPT_DIR}"/resilience.sql "${SCRIPT_DIR}"/v2_features.sql; do
   echo ">> psql -f ${f}"
   psql "${DB_URL}" -v ON_ERROR_STOP=1 -f "${f}"
 done

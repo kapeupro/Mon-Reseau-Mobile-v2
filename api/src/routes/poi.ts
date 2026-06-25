@@ -37,11 +37,14 @@ import {
   parseBbox,
   parseCategory,
   parseId,
+  parseOperator,
   type PoiFeature,
   type PoiFeatureCollection,
   type PoiDetail,
   type ServingOperator,
   type NearbyOutage,
+  type ScoreHistoryPoint,
+  type OutageWeeklyBucket,
   type CategoryValue,
 } from "../schema.ts";
 
@@ -85,6 +88,9 @@ interface PoiListRow {
   n_operators: number;
   n_sites: number;
   n_outages_90d: number;
+  // F1: present only when an operator overlay is requested (NULL otherwise so
+  // the SELECT shape stays stable). boolean | null from the EXISTS subquery.
+  operator_covered: boolean | null;
 }
 
 export const poiRoutes = new Elysia()
@@ -102,9 +108,16 @@ export const poiRoutes = new Elysia()
       set.status = 400;
       return { error: catParsed.error };
     }
+    // F1: optional operator overlay. null -> no overlay (operator_covered absent).
+    const opParsed = parseOperator(query.operator as string | undefined);
+    if (!opParsed.ok) {
+      set.status = 400;
+      return { error: opParsed.error };
+    }
 
     const { minLon, minLat, maxLon, maxLat } = bboxParsed.value;
     const category = catParsed.value; // CategoryValue | null
+    const operator = opParsed.value; // number | null
     const { rMeters, windowDays } = await readConstants();
 
     try {
@@ -133,7 +146,20 @@ export const poiRoutes = new Elysia()
           m.comp_outage_malus,
           m.n_operators,
           m.n_sites,
-          m.n_outages AS n_outages_90d
+          m.n_outages AS n_outages_90d,
+          -- F1 OPERATOR OVERLAY: NULL when no operator requested (column stays
+          -- in the SELECT for a stable row shape); otherwise true iff that
+          -- operator has an ACTIVE 4G site within R_METERS (ST_DWithin in 2154).
+          CASE WHEN ${operator}::int IS NULL THEN NULL
+               ELSE EXISTS (
+                 SELECT 1
+                 FROM network_site s
+                 WHERE s.operator_code = ${operator}::int
+                   AND s.has_4g
+                   AND s.is_active
+                   AND ST_DWithin(p.geom, s.geom, ${rMeters})
+               )
+          END AS operator_covered
         FROM critical_poi p
         JOIN mv_resilience_score m ON m.poi_id = p.id
         CROSS JOIN env
@@ -162,6 +188,11 @@ export const poiRoutes = new Elysia()
             n_sites: Number(r.n_sites),
             n_outages_90d: Number(r.n_outages_90d),
           },
+          // F1: only attach operator_covered when an overlay was requested
+          // (SQL returns NULL otherwise) so the property is absent by default.
+          ...(operator != null
+            ? { operator_covered: r.operator_covered === true }
+            : {}),
         },
       }));
 
@@ -312,6 +343,38 @@ export const poiRoutes = new Elysia()
         };
       });
 
+      // 4) F2b. Daily score history from score_snapshot (may be empty), oldest
+      //    -> newest. score_snapshot is a v2 table (db/v2_features.sql).
+      const historyRows = await sql<{ date: string; score: number }[]>`
+        SELECT to_char(captured_date, 'YYYY-MM-DD') AS date,
+               score
+        FROM score_snapshot
+        WHERE poi_id = ${id}
+        ORDER BY captured_date ASC
+      `;
+      const score_history: ScoreHistoryPoint[] = historyRows.map((r) => ({
+        date: r.date,
+        score: Number(r.score),
+      }));
+
+      // 5) F2b. Nearby outages within R over the window, bucketed by ISO week
+      //    (date_trunc('week', ...) -> Monday). Distance math in 2154 metres.
+      const weeklyRows = await sql<{ week_start: string; count: number }[]>`
+        SELECT to_char(date_trunc('week', o.observed_date)::date, 'YYYY-MM-DD') AS week_start,
+               count(*)::int AS count
+        FROM critical_poi p
+        JOIN site_outage o
+          ON o.observed_date >= CURRENT_DATE - (${windowDays}::int || ' days')::interval
+         AND ST_DWithin(p.geom, o.geom, ${rMeters})
+        WHERE p.id = ${id}
+        GROUP BY date_trunc('week', o.observed_date)
+        ORDER BY date_trunc('week', o.observed_date) ASC
+      `;
+      const outage_weekly: OutageWeeklyBucket[] = weeklyRows.map((r) => ({
+        week_start: r.week_start,
+        count: Number(r.count),
+      }));
+
       const body: PoiDetail = {
         id: Number(base.id),
         name: base.name,
@@ -332,6 +395,8 @@ export const poiRoutes = new Elysia()
         },
         serving_operators,
         nearby_outages,
+        score_history,
+        outage_weekly,
         constants: { R_METERS: rMeters, OUTAGE_WINDOW_DAYS: windowDays },
         disclaimer: ARCEP_DISCLAIMER,
       };

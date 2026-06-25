@@ -2,9 +2,10 @@
 // ResiliaMap web — src/hooks/usePoi.ts
 // ----------------------------------------------------------------------------
 // TanStack Query hooks wrapping the typed API client (src/api.ts):
-//   usePoi(bbox, category)   POIs in the current map bbox (bbox-driven refetch)
+//   usePoi(bbox, category, operator)  POIs in the current map bbox (bbox-driven)
 //   usePoiDetail(id)         full detail for a clicked POI
 //   useStats(category)       national aggregates
+//   useDepartments()         per-département resilience ranking (F3)
 //   useHealth()              API/DB health for the status badge
 //
 // The bbox is rounded into a coarse query key so panning a few metres does not
@@ -14,7 +15,13 @@
 // ============================================================================
 
 import { useQuery } from "@tanstack/react-query";
-import { getHealth, getPoi, getPoiDetail, getStats } from "../api";
+import {
+  getDepartments,
+  getHealth,
+  getPoi,
+  getPoiDetail,
+  getStats,
+} from "../api";
 import type { Bbox, CategoryValue } from "../types/api";
 
 /** Round bbox coords so tiny movements reuse the same cache entry. */
@@ -31,16 +38,20 @@ function roundBbox(b: Bbox): Bbox {
 /**
  * POIs inside the current map bbox. `enabled` lets the caller hold the query
  * until the map has emitted its first real bounds.
+ *
+ * F1: `operator` (an MCC-MNC code or null) is part of the query key and is
+ * forwarded to the API so each Feature gains `operator_covered` when set.
  */
 export function usePoi(
   bbox: Bbox | null,
   category: CategoryValue | null,
+  operator: number | null = null,
   enabled = true,
 ) {
   const key = bbox ? roundBbox(bbox) : null;
   return useQuery({
-    queryKey: ["poi", key, category],
-    queryFn: ({ signal }) => getPoi(bbox as Bbox, category, signal),
+    queryKey: ["poi", key, category, operator],
+    queryFn: ({ signal }) => getPoi(bbox as Bbox, category, operator, signal),
     enabled: enabled && bbox != null,
     // Keep the previous features painted while the next bbox loads (no flicker).
     placeholderData: (prev) => prev,
@@ -63,6 +74,15 @@ export function useStats(category: CategoryValue | null) {
   return useQuery({
     queryKey: ["stats", category],
     queryFn: ({ signal }) => getStats(category, signal),
+    staleTime: 60_000,
+  });
+}
+
+/** Per-département resilience ranking (most fragile first). */
+export function useDepartments() {
+  return useQuery({
+    queryKey: ["departments"],
+    queryFn: ({ signal }) => getDepartments(signal),
     staleTime: 60_000,
   });
 }

@@ -40,6 +40,10 @@ services:
       # postgres entrypoint, in lexical order. Re-applying later: `make db-init`.
       - ./db/00_extensions.sql:/docker-entrypoint-initdb.d/00_extensions.sql:ro
       - ./db/resilience.sql:/docker-entrypoint-initdb.d/10_resilience.sql:ro
+      # v2 feature objects (score_snapshot, snapshot_resilience_score(),
+      # v_department_resilience, v_commune_outage_hotspots). Lexical order 20_
+      # ensures it runs AFTER 10_resilience.sql, on which it depends.
+      - ./db/v2_features.sql:/docker-entrypoint-initdb.d/20_v2_features.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resiliamap} -d ${POSTGRES_DB:-resiliamap}"]
       interval: 10s

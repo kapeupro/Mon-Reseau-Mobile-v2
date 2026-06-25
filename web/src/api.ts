@@ -4,9 +4,10 @@
 // Typed fetch client for the ResiliaMap API (Bun + Elysia).
 //
 // Endpoints mirrored from api/src/schema.ts (the single contract source):
-//   GET /api/poi?bbox=minLon,minLat,maxLon,maxLat&category=  -> GeoJSON FC
+//   GET /api/poi?bbox=minLon,minLat,maxLon,maxLat&category=&operator=  -> GeoJSON FC
 //   GET /api/poi/:id                                          -> PoiDetail
 //   GET /api/stats?category=                                  -> Stats
+//   GET /api/departments                                      -> DepartmentsResponse
 //   GET /api/health                                           -> Health
 //
 // Base URL: import.meta.env.VITE_API_URL (default http://localhost:3010).
@@ -22,6 +23,7 @@
 import type {
   Bbox,
   CategoryValue,
+  DepartmentsResponse,
   Health,
   PoiDetail,
   PoiFeatureCollection,
@@ -101,14 +103,20 @@ export function bboxToParam(b: Bbox): string {
 /**
  * GET /api/poi — POIs (with score + breakdown) inside a bbox, optional category.
  * Returns a GeoJSON FeatureCollection with `meta` (count, constants, disclaimer).
+ *
+ * F1: when `operator` (an MCC-MNC code) is supplied it is forwarded as
+ * `&operator=`, and each Feature.properties gains `operator_covered` (boolean).
+ * When `operator` is null the param is omitted and `operator_covered` is absent.
  */
 export function getPoi(
   bbox: Bbox,
   category: CategoryValue | null,
+  operator?: number | null,
   signal?: AbortSignal,
 ): Promise<PoiFeatureCollection> {
   const params = new URLSearchParams({ bbox: bboxToParam(bbox) });
   if (category) params.set("category", category);
+  if (operator != null) params.set("operator", String(operator));
   return request<PoiFeatureCollection>(`/api/poi?${params.toString()}`, signal);
 }
 
@@ -129,6 +137,16 @@ export function getStats(
   if (category) params.set("category", category);
   const qs = params.toString();
   return request<Stats>(`/api/stats${qs ? `?${qs}` : ""}`, signal);
+}
+
+/**
+ * GET /api/departments — per-département resilience aggregate, sorted by
+ * avg_score ASC (most fragile first), wrapped as { departments, disclaimer }.
+ */
+export function getDepartments(
+  signal?: AbortSignal,
+): Promise<DepartmentsResponse> {
+  return request<DepartmentsResponse>(`/api/departments`, signal);
 }
 
 /** GET /api/health — DB + MV freshness (used for a status indicator). */

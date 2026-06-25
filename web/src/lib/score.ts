@@ -41,6 +41,15 @@ export const SCORE_STOPS: ScoreStop[] = [
 /** Color shown for a POI with no serving site (is_uncovered === true). */
 export const UNCOVERED_COLOR = "#6b7280"; // neutral grey
 
+/**
+ * F1 OPERATOR FILTER colours. When an operator overlay is active the map drops
+ * the score ramp and paints each POI green (the operator has an active 4G site
+ * within R) or red (absent). Shared by the MapView circle layer + the legend so
+ * they never disagree, exactly like SCORE_STOPS.
+ */
+export const OPERATOR_COVERED_COLOR = "#1a9641"; // green: operator present
+export const OPERATOR_UNCOVERED_COLOR = "#d7191c"; // red: operator absent
+
 /** Map a 0..100 score to a ramp color. */
 export function scoreToColor(score: number): string {
   for (const stop of SCORE_STOPS) {

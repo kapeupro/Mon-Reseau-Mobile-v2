@@ -10,6 +10,7 @@
 //
 // License: AGPL-3.0-or-later. See README.ResiliaMap.md.
 // ============================================================================
+import { OPERATORS } from "./constants.ts";
 
 // ----------------------------------------------------------------------------
 // Shared sub-shapes
@@ -45,6 +46,12 @@ export interface PoiProperties {
   score: number; // 0..100
   is_uncovered: boolean; // true when no serving site within R
   breakdown: ScoreBreakdown;
+  /**
+   * F1 OPERATOR FILTER. Present ONLY when the `operator=<MCC-MNC>` query param
+   * is supplied. true when that operator has an ACTIVE 4G network_site within
+   * R_METERS of the POI (ST_DWithin in 2154). Absent (undefined) otherwise.
+   */
+  operator_covered?: boolean;
 }
 
 export interface PoiFeature {
@@ -83,6 +90,18 @@ export interface NearbyOutage {
   distance_m: number;
 }
 
+/** F2b. One archived daily score for the POI (from score_snapshot). */
+export interface ScoreHistoryPoint {
+  date: string; // YYYY-MM-DD (captured_date)
+  score: number; // 0..100
+}
+
+/** F2b. Nearby outages bucketed by ISO week over OUTAGE_WINDOW_DAYS. */
+export interface OutageWeeklyBucket {
+  week_start: string; // YYYY-MM-DD (Monday of the ISO week)
+  count: number;
+}
+
 export interface PoiDetail {
   id: number;
   name: string;
@@ -96,6 +115,10 @@ export interface PoiDetail {
   breakdown: ScoreBreakdown;
   serving_operators: ServingOperator[];
   nearby_outages: NearbyOutage[];
+  /** F2b. Daily score history (oldest -> newest); may be empty. */
+  score_history: ScoreHistoryPoint[];
+  /** F2b. Nearby outages bucketed by ISO week over the window; may be empty. */
+  outage_weekly: OutageWeeklyBucket[];
   constants: { R_METERS: number; OUTAGE_WINDOW_DAYS: number };
   disclaimer: string;
 }
@@ -127,6 +150,27 @@ export interface Stats {
     W_OUTAGE: number;
     OUTAGE_DECAY_HALFLIFE_DAYS: number;
   };
+  disclaimer: string;
+}
+
+// ----------------------------------------------------------------------------
+// GET /api/departments  — per-département resilience aggregate (F3)
+// ----------------------------------------------------------------------------
+
+/** One row of v_department_resilience (counts are JS numbers, avg parsed). */
+export interface DepartmentResilience {
+  dept: string; // left(insee_com,2): '75', '13', '2A', '2B', '97' (DOM caveat)
+  n_poi: number;
+  n_sante: number;
+  n_securite: number;
+  avg_score: number; // numeric(5,1) -> parsed float, e.g. 62.4
+  n_fragile: number; // score < 40
+  n_uncovered: number; // is_uncovered
+  n_spof: number; // comp_spof_malus > 0
+}
+
+export interface DepartmentsResponse {
+  departments: DepartmentResilience[]; // sorted by avg_score ASC (NULLS LAST)
   disclaimer: string;
 }
 
@@ -201,4 +245,25 @@ export function parseId(raw: string | null | undefined): Parsed<number> {
   const n = Number(raw);
   if (!Number.isSafeInteger(n) || n <= 0) return { ok: false, error: "id out of range" };
   return { ok: true, value: n };
+}
+
+/**
+ * F1. Validate the optional `operator=<MCC-MNC>` query param. Empty/undefined
+ * -> null (no operator overlay). Must otherwise be one of the 4 known métropole
+ * operator codes (Orange/SFR/Bouygues/Free) from constants.OPERATORS; anything
+ * else is a 400 so we never run an unfiltered/unexpected operator query.
+ */
+export function parseOperator(raw: string | null | undefined): Parsed<number | null> {
+  if (raw == null || raw === "") return { ok: true, value: null };
+  if (!/^\d+$/.test(raw)) {
+    return { ok: false, error: "operator must be a numeric MCC-MNC code" };
+  }
+  const code = Number(raw);
+  if (!Object.prototype.hasOwnProperty.call(OPERATORS, code)) {
+    return {
+      ok: false,
+      error: "operator must be one of 20801,20810,20820,20815",
+    };
+  }
+  return { ok: true, value: code };
 }
