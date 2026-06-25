@@ -33,7 +33,7 @@ PSQL_URL ?= postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(DB_HOST
 
 .DEFAULT_GOAL := help
 .PHONY: help env db-up db-down db-logs db-init db-psql ingest-all ingest-outages \
-        refresh-score api-dev web-dev up down logs ps clean
+        sites-anfr refresh-score api-dev web-dev up down logs ps clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -67,6 +67,12 @@ ingest-all: ## Run all loaders (sites + POI + today's outages) + refresh MV
 
 ingest-outages: ## Run ONLY today's outages loader + refresh MV (daily cron)
 	cd ingest && bun install && bun run src/cron_outages.ts
+
+sites-anfr: ## Build (ANFR ZIP -> CSV) + load the REAL per-operator 4G sites, refresh MV
+	python3 ingest/anfr_sites.py
+	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/load_anfr_sites.sql
+	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/refresh_score.sql
+	@echo "ANFR 4G sites loaded + score refreshed."
 
 refresh-score: ## REFRESH MATERIALIZED VIEW mv_resilience_score
 	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/refresh_score.sql

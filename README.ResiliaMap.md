@@ -158,9 +158,13 @@ docker compose -f docker-compose.resiliamap.yml --env-file .env.resiliamap up -d
 #    already applied db/resilience.sql; run this to (re)apply against any DB:
 make db-init
 
-# 3. Load data (sites + POI + today's outages) and refresh the score MV.
-#    Read ingest/README.md FIRST — several dataset slugs / CSV columns are
-#    TODO-marked and need a one-time real-file inspection before production.
+# 3a. Load the REAL per-operator 4G sites from ANFR open data (downloads the ANFR
+#     ZIP, joins SUP_SUPPORT x SUP_STATION x SUP_EMETTEUR -> network_site).
+make sites-anfr
+
+# 3b. Load POI (FINESS hospitals, gendarmerie, police) + today's outages, refresh MV.
+#     Dataset slugs + the key CSV columns are VERIFIED against live files
+#     (2026-06-25); see ingest/README.md for the remaining calibration notes.
 make ingest-all
 
 # 4. Local dev servers (alternative to the dockerised api/web)
@@ -176,6 +180,27 @@ Default host ports (shifted off the Arcep `:8000` to avoid collisions): DB
 `.env.resiliamap`.
 
 `make help` lists every target.
+
+---
+
+## ✅ Verified end-to-end run (real data, 2026-06-25)
+
+A full real-data run on métropole — every figure straight from the live DB:
+
+| Layer | Source (Licence Ouverte) | Rows |
+|---|---|---|
+| 4G sites per operator | ANFR > 5 W (`SUP_SUPPORT` × `STATION` × `EMETTEUR`, LTE) | 132,778 |
+| Outages (archived) | Arcep daily "sites-indisponibles", 6 days | 7,432 |
+| Hospitals | FINESS geolocated extract (cs1100507) | 3,195 |
+| Gendarmerie units | Ministère de l'Intérieur | 3,838 |
+| Police services | Ministère de l'Intérieur (sparse dataset) | 25 |
+
+Resilience score over **7,058 critical POI**: mean **86.8 / 100**; **147** with
+no 4G site within 3 km (incl. **11 hospitals** — e.g. CH Aiguilles-Queyras, CH
+Saint-Éloi de Sospel), **30** single-points-of-failure, **170** fragile (< 40)
+security sites. These are indicative figures on a 3 km radius and arbitrary
+weights — calibrate `score_constants` on a pilot department before any public
+claim (see methodology below + the mandatory Arcep disclaimer).
 
 ---
 
