@@ -23,15 +23,35 @@ import { departmentsRoutes } from "./routes/departments.ts";
 import { closeDb } from "./db.ts";
 import { API_PORT, API_VERSION, ARCEP_DISCLAIMER } from "./constants.ts";
 
-// CORS: in compose the browser hits the same origin via the nginx proxy, but in
-// local dev the Vite app (e.g. :8081) calls the API (:3010/:3801) cross-origin.
-// Allow configurable origins; default permissive for a public read-only API.
-const CORS_ORIGIN = process.env.CORS_ORIGIN ?? "*";
+// CORS: in compose the browser hits the same origin via the nginx proxy (no CORS
+// needed), but in local dev the Vite app (e.g. :8081) calls the API cross-origin.
+// Fail-safe: an explicit allowlist always wins; otherwise we reflect any origin
+// in dev for convenience but DENY cross-origin in production, where the real data
+// path is same-origin through nginx — so denying breaks nothing legitimate.
+const NODE_ENV = process.env.NODE_ENV ?? "development";
+const rawCors = process.env.CORS_ORIGIN?.trim();
+
+function resolveCorsOrigin(): boolean | string[] {
+  // Explicit allowlist (comma-separated, e.g. "https://resiliamap.fr") wins.
+  if (rawCors && rawCors !== "*") {
+    return rawCors.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  if (NODE_ENV === "production") {
+    console.warn(
+      rawCors === "*"
+        ? "[api] CORS_ORIGIN='*' ignored in production — set an explicit allowlist to enable cross-origin"
+        : "[api] CORS_ORIGIN unset in production — cross-origin requests are denied (web is served same-origin via nginx)"
+    );
+    return false; // no reflection; same-origin requests are unaffected
+  }
+  // Dev convenience: reflect any origin so the Vite app can call the API directly.
+  return true;
+}
 
 const app = new Elysia()
   .use(
     cors({
-      origin: CORS_ORIGIN === "*" ? true : CORS_ORIGIN.split(",").map((s) => s.trim()),
+      origin: resolveCorsOrigin(),
       methods: ["GET", "OPTIONS"],
     })
   )

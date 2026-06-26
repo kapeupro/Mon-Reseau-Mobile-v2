@@ -82,6 +82,10 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgres://resiliamap:changeme_local_only@db:5432/resiliamap}
       API_PORT: ${API_PORT:-3801}
+      # In production an unset/`*` CORS_ORIGIN denies cross-origin (web is served
+      # same-origin via the nginx proxy below). Set an explicit allowlist to opt in.
+      NODE_ENV: ${NODE_ENV:-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
     ports:
       - "${API_PORT:-3801}:${API_PORT:-3801}"
     networks:

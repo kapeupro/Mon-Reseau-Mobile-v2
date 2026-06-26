@@ -41,7 +41,8 @@ Env vars:
 |---|---|---|
 | `DATABASE_URL` | `postgres://resiliamap:changeme_local_only@localhost:5440/resiliamap` | postgres (porsager) connection string |
 | `API_PORT` | `3010` (compose passes `3801`) | listen port |
-| `CORS_ORIGIN` | `*` | comma-separated allowed origins, or `*` |
+| `NODE_ENV` | `development` | `production` makes CORS fail-safe (see below) |
+| `CORS_ORIGIN` | deny in prod / reflect in dev | comma-separated allowed origins; `*` is **ignored in production** |
 | `API_VERSION` | `0.1.0` | reported by `/api/health` |
 | `R_METERS` / `OUTAGE_WINDOW_DAYS` | `3000` / `90` | display fallback if `score_constants` is unavailable |
 
