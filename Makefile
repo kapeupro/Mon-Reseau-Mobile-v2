@@ -52,11 +52,12 @@ db-down: ## Stop db + tileserv
 db-logs: ## Tail db logs
 	$(COMPOSE) logs -f db
 
-db-init: ## Apply db schema + v2 features (schema, MV, seed, history/dept views). Idempotent.
-	@echo "Applying db/00_extensions.sql + db/resilience.sql + db/v2_features.sql to $(PSQL_URL)"
+db-init: ## Apply db schema + v2 features + read-only role. Idempotent.
+	@echo "Applying db/00_extensions.sql + resilience.sql + v2_features.sql + 30_roles.sql to $(PSQL_URL)"
 	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/00_extensions.sql
 	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/resilience.sql
 	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/v2_features.sql
+	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/30_roles.sql
 	@echo "Schema applied."
 
 db-psql: ## Open a psql shell against the ResiliaMap DB

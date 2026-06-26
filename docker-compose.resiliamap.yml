@@ -44,6 +44,9 @@ services:
       # v_department_resilience, v_commune_outage_hotspots). Lexical order 20_
       # ensures it runs AFTER 10_resilience.sql, on which it depends.
       - ./db/v2_features.sql:/docker-entrypoint-initdb.d/20_v2_features.sql:ro
+      # Read-only role for API + tileserv. Lexical 30_ runs LAST (after the
+      # CASCADE drop/recreate in 10_resilience.sql) so its grants survive.
+      - ./db/30_roles.sql:/docker-entrypoint-initdb.d/30_roles.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resiliamap} -d ${POSTGRES_DB:-resiliamap}"]
       interval: 10s
@@ -60,8 +63,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      # pg_tileserv reads DATABASE_URL. Prefer a read-only role in production.
-      DATABASE_URL: ${TILESERV_DATABASE_URL:-postgres://resiliamap:changeme_local_only@db:5432/resiliamap}
+      # pg_tileserv reads DATABASE_URL. Default to the read-only role (db/30_roles.sql).
+      DATABASE_URL: ${TILESERV_DATABASE_URL:-postgres://resiliamap_ro:changeme_local_only@db:5432/resiliamap}
     command: ["--config", "/config/pg_tileserv.toml"]
     volumes:
       - ./tileserv/pg_tileserv.toml:/config/pg_tileserv.toml:ro
