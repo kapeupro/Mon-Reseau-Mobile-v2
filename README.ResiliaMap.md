@@ -277,7 +277,8 @@ Note **Free Mobile is `#4be1bb` (a teal), NOT red.**
 | `critical_poi` police | Min. Intérieur *services de police accueillant du public avec géolocalisation* | CSV | Licence Ouverte / Etalab | GPS column names + slug **TODO**. |
 | `critical_poi` gendarmerie | *unités de gendarmerie accueillant du public* | CSV | Licence Ouverte / Etalab | `geocodage_x_gps` (lon) / `geocodage_y_gps` (lat). Slug **TODO**. |
 | `operator_coverage` (OPTIONAL) | Arcep couverture théorique | GeoPackage `.gpkg`, table `couverture_theorique`, col `operateur_commercial` | Arcep / Etalab (indicative, non-contractual) | pluggable local file in `ingest/data/raw/`. Score works without it. |
-| basemap | OpenStreetMap raster tiles | XYZ raster | **ODbL** (attribution required) | `https://tile.openstreetmap.org/{z}/{x}/{y}.png`, key-free. |
+| basemap (dev) | OpenStreetMap raster tiles | XYZ raster | **ODbL** (attribution required) | `https://tile.openstreetmap.org/{z}/{x}/{y}.png`, key-free. **Dev/demo only** — the public OSM CDN policy forbids prod traffic. |
+| basemap (prod) | licensed/self-hosted vector style | MapLibre style URL | provider ToS | Set `VITE_BASEMAP_STYLE_URL` (e.g. MapTiler/Stadia style.json). Empty -> OSM fallback. See `web/src/components/MapView.tsx`. |
 
 > ⚠️ Public CSV column names (FINESS, police, gendarmerie) and data.gouv dataset
 > slugs are **unstable / undocumented**. Loaders use a defensive `pick()` over

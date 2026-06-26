@@ -47,8 +47,11 @@ import {
 import { operatorName } from "../lib/operators";
 import Legend from "./Legend";
 
-// Key-free OSM raster basemap. Fine for dev / civic demos; for production traffic
-// switch to a self-hosted or licensed tile provider (see README).
+// Key-free OSM raster basemap — the dev / civic-demo fallback. The public OSM
+// CDN tile policy forbids heavy/prod traffic, so production MUST override this
+// with a licensed or self-hosted vector style via VITE_BASEMAP_STYLE_URL (see
+// README.ResiliaMap.md). MapLibre accepts either a style-URL string or an inline
+// StyleSpecification, so the resolver below switches with no other code change.
 const OSM_STYLE: StyleSpecification = {
   version: 8,
   sources: {
@@ -66,6 +69,13 @@ const OSM_STYLE: StyleSpecification = {
   },
   layers: [{ id: "osm", type: "raster", source: "osm", minzoom: 0, maxzoom: 19 }],
 };
+
+// Production override: a licensed/self-hosted MapLibre style URL (e.g. MapTiler
+// or Stadia). Empty in dev -> fall back to the key-free OSM raster above. The key
+// in such a URL is client-exposed by design; restrict it by referer/domain in the
+// provider dashboard.
+const BASEMAP_STYLE: string | StyleSpecification =
+  import.meta.env.VITE_BASEMAP_STYLE_URL || OSM_STYLE;
 
 const POI_SOURCE = "poi";
 const POI_LAYER = "poi-circles";
@@ -181,7 +191,7 @@ const MapView = forwardRef<MapHandle, Props>(function MapView(
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: OSM_STYLE,
+      style: BASEMAP_STYLE,
       center,
       zoom,
       minZoom: 4,
