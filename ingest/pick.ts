@@ -110,6 +110,9 @@ export function decodeBytes(bytes: Uint8Array, encoding: string): string {
 export function toNumber(value: string | undefined): number | undefined {
   if (value === undefined) return undefined;
   const cleaned = value.replace(/\s/g, "").replace(",", ".");
+  // Guard empty/whitespace-only: Number("") is 0, which would silently become a
+  // bogus 0°-meridian coordinate. The contract is empty -> undefined.
+  if (cleaned === "") return undefined;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : undefined;
 }

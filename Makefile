@@ -33,7 +33,7 @@ PSQL_URL ?= postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(DB_HOST
 
 .DEFAULT_GOAL := help
 .PHONY: help env db-up db-down db-logs db-init db-psql ingest-all ingest-outages \
-        sites-anfr refresh-score api-dev web-dev up down logs ps clean
+        sites-anfr refresh-score api-dev web-dev test up down logs ps clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -85,6 +85,10 @@ api-dev: ## Run the Bun/Elysia API locally with hot reload
 
 web-dev: ## Run the Vite dev server locally
 	cd web && bun install && bun run dev
+
+test: ## Run the ResiliaMap unit tests (api/ + ingest/ pure logic, no DB needed)
+	cd api && bun test
+	cd ingest && bun test
 
 # --- whole stack ------------------------------------------------------------
 up: ## Start the full dockerised stack (db, tileserv, api, web)
