@@ -193,6 +193,34 @@ export interface Health {
 }
 
 // ----------------------------------------------------------------------------
+// GET /api/admin/data-quality  — ingest run health (E4)
+// ----------------------------------------------------------------------------
+
+/** Latest run for one ingest source (from ingest_run). */
+export interface DataQualitySource {
+  source: "sites" | "poi" | "pannes" | "all";
+  last_run_at: string | null; // ISO, finished_at of the newest run
+  status: "ok" | "partial" | "error" | "never";
+  rows_fetched: number | null;
+  rows_inserted: number | null;
+  rows_ignored: number | null;
+  error_detail: string | null;
+  unrecognized_columns: string[];
+}
+
+export interface DataQuality {
+  generated_at: string; // ISO
+  sources: DataQualitySource[];
+  /** Outage-feed freshness, separating "archive depth" from "did today's fetch work". */
+  outage_freshness: {
+    latest_observed_date: string | null; // max(observed_date) in site_outage
+    days_in_archive: number;
+    last_fetch_status: "ok" | "partial" | "error" | "never"; // newest pannes run
+    last_fetch_at: string | null;
+  };
+}
+
+// ----------------------------------------------------------------------------
 // Query-param parsing & validation (no external validator dependency).
 // Returns {ok:true,value} or {ok:false,error} so routes can map to HTTP 400.
 // ----------------------------------------------------------------------------

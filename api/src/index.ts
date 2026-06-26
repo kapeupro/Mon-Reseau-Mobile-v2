@@ -21,6 +21,7 @@ import { healthRoutes } from "./routes/health.ts";
 import { poiRoutes } from "./routes/poi.ts";
 import { statsRoutes } from "./routes/stats.ts";
 import { departmentsRoutes } from "./routes/departments.ts";
+import { adminRoutes } from "./routes/admin.ts";
 import { rateLimit } from "./ratelimit.ts";
 import { closeDb } from "./db.ts";
 import { API_PORT, API_VERSION, ARCEP_DISCLAIMER } from "./constants.ts";
@@ -108,6 +109,7 @@ const app = new Elysia()
   .use(poiRoutes)
   .use(statsRoutes)
   .use(departmentsRoutes)
+  .use(adminRoutes)
   // Uniform 404 for unknown paths.
   .onError(({ code, set, error }) => {
     if (code === "NOT_FOUND") {

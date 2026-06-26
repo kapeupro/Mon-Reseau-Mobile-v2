@@ -39,6 +39,20 @@ function buildIndex(row: Row): Map<string, string> {
 // De-dupe WARN spam: only warn once per (context, candidate-set) combination.
 const warnedOnce = new Set<string>();
 
+/**
+ * Snapshot the set of "no column matched" warnings raised so far (the
+ * unrecognized-columns signal for the data-quality dashboard, E4). Each entry is
+ * a `${context}::${candidates}` key. Returns just the human context for brevity.
+ */
+export function getPickWarnings(): string[] {
+  return Array.from(warnedOnce).map((k) => k.split("::")[0]!);
+}
+
+/** Reset the warning set so a fresh ingest run starts with a clean slate. */
+export function resetPickWarnings(): void {
+  warnedOnce.clear();
+}
+
 export interface PickOptions {
   /** Human label for logs, e.g. "FINESS lat". */
   context?: string;

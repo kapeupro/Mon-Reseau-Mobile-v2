@@ -23,6 +23,7 @@
 import type {
   Bbox,
   CategoryValue,
+  DataQuality,
   DepartmentsResponse,
   Health,
   PoiDetail,
@@ -152,4 +153,9 @@ export function getDepartments(
 /** GET /api/health — DB + MV freshness (used for a status indicator). */
 export function getHealth(signal?: AbortSignal): Promise<Health> {
   return request<Health>(`/api/health`, signal);
+}
+
+/** GET /api/admin/data-quality — per-source ingest run health (E4 admin view). */
+export function getDataQuality(signal?: AbortSignal): Promise<DataQuality> {
+  return request<DataQuality>(`/api/admin/data-quality`, signal);
 }

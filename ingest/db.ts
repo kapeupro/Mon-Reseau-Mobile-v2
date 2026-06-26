@@ -112,6 +112,44 @@ export async function snapshotScore(): Promise<void> {
   console.log("[ingest] score_snapshot updated.");
 }
 
+/** One persisted ingest-run record (E4 data-quality dashboard). */
+export interface IngestRun {
+  source: "sites" | "poi" | "pannes" | "all";
+  startedAt: Date;
+  finishedAt: Date;
+  status: "ok" | "partial" | "error";
+  rowsFetched?: number | null;
+  rowsInserted?: number | null;
+  rowsIgnored?: number | null;
+  errorDetail?: string | null;
+  unrecognizedColumns?: string[];
+  extra?: Record<string, string | number | boolean | null>;
+}
+
+/**
+ * Persist a run's metrics into ingest_run (db/data_quality.sql). Best-effort:
+ * a logging failure must NEVER mask the underlying ingest result, so errors here
+ * are caught and warned, not thrown.
+ */
+export async function recordIngestRun(run: IngestRun): Promise<void> {
+  try {
+    await sql`
+      INSERT INTO ingest_run (
+        source, started_at, finished_at, status,
+        rows_fetched, rows_inserted, rows_ignored,
+        error_detail, unrecognized_columns, extra
+      ) VALUES (
+        ${run.source}, ${run.startedAt}, ${run.finishedAt}, ${run.status},
+        ${run.rowsFetched ?? null}, ${run.rowsInserted ?? null}, ${run.rowsIgnored ?? null},
+        ${run.errorDetail ?? null},
+        ${sql.json(run.unrecognizedColumns ?? [])},
+        ${sql.json(run.extra ?? {})}
+      )`;
+  } catch (err) {
+    console.warn(`[ingest] WARN: failed to record ingest_run for ${run.source}:`, err);
+  }
+}
+
 /**
  * Map a free-text operator label (from the outages feed or ANFR CSV) to its
  * MCC-MNC code. The four métropole MNOs only; returns null when unmappable so

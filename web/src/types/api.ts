@@ -192,6 +192,32 @@ export interface Health {
 }
 
 // ----------------------------------------------------------------------------
+// GET /api/admin/data-quality  (E4) — mirrors api/src/schema.ts DataQuality
+// ----------------------------------------------------------------------------
+
+export interface DataQualitySource {
+  source: "sites" | "poi" | "pannes" | "all";
+  last_run_at: string | null;
+  status: "ok" | "partial" | "error" | "never";
+  rows_fetched: number | null;
+  rows_inserted: number | null;
+  rows_ignored: number | null;
+  error_detail: string | null;
+  unrecognized_columns: string[];
+}
+
+export interface DataQuality {
+  generated_at: string;
+  sources: DataQualitySource[];
+  outage_freshness: {
+    latest_observed_date: string | null;
+    days_in_archive: number;
+    last_fetch_status: "ok" | "partial" | "error" | "never";
+    last_fetch_at: string | null;
+  };
+}
+
+// ----------------------------------------------------------------------------
 // Bbox helper (frontend convenience; API expects "minLon,minLat,maxLon,maxLat")
 // ----------------------------------------------------------------------------
 

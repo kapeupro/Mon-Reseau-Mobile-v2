@@ -68,6 +68,7 @@ db-init: ## Apply db schema + v2 features + read-only role. Idempotent.
 	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/resilience.sql
 	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/v2_features.sql
 	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/30_roles.sql
+	psql "$(PSQL_URL)" -v ON_ERROR_STOP=1 -f db/data_quality.sql
 	@echo "Schema applied."
 
 db-psql: ## Open a psql shell against the ResiliaMap DB

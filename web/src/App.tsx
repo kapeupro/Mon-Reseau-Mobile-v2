@@ -36,6 +36,12 @@ import SearchBar from "./components/SearchBar";
 import DepartmentsPanel from "./components/DepartmentsPanel";
 import Disclaimer from "./components/Disclaimer";
 import Stats from "./components/Stats";
+import DataQualityPanel from "./components/DataQualityPanel";
+
+// E4: internal data-quality view, opened with ?admin=1. Read once at module load.
+const ADMIN_VIEW =
+  typeof location !== "undefined" &&
+  new URLSearchParams(location.search).get("admin") === "1";
 
 function HealthBadge() {
   const { data, isLoading, isError } = useHealth();
@@ -61,7 +67,13 @@ function HealthBadge() {
 // has the shared view + filters (avoids a flash of the default France view).
 const INITIAL = readUrlState();
 
+// E4: ?admin=1 opens the internal data-quality dashboard instead of the public
+// map. A thin dispatcher keeps MapApp's hooks unconditional (Rules of Hooks).
 export default function App() {
+  return ADMIN_VIEW ? <DataQualityPanel /> : <MapApp />;
+}
+
+function MapApp() {
   const [category, setCategory] = useState<CategoryValue | null>(
     INITIAL.category,
   );
