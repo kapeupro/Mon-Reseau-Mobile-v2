@@ -73,9 +73,9 @@ export const OUTAGE_WINDOW_DAYS_DEFAULT = Number(
   process.env.OUTAGE_WINDOW_DAYS ?? 90
 );
 
-/** API port. Defaults to 3010 to avoid collisions with the Arcep stack (:8000);
- *  compose passes API_PORT explicitly (3801 there). */
-export const API_PORT = Number(process.env.API_PORT ?? 3010);
+/** API port. 3801 everywhere (code default, compose, docs) — chosen to avoid
+ *  collisions with the Arcep stack on :8000. */
+export const API_PORT = Number(process.env.API_PORT ?? 3801);
 
 /** Version string surfaced in /api/health. Override with API_VERSION env. */
 export const API_VERSION = process.env.API_VERSION ?? "0.1.0";

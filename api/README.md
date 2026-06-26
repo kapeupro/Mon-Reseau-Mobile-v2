@@ -30,7 +30,7 @@ materialized view `mv_resilience_score`, plus per-POI detail and national stats.
 # from api/
 bun install
 DATABASE_URL=postgres://resiliamap:changeme_local_only@localhost:5440/resiliamap \
-  API_PORT=3010 bun run dev      # watch mode
+  API_PORT=3801 bun run dev      # watch mode
 # or
 bun run start
 ```
@@ -40,7 +40,7 @@ Env vars:
 | var | default | meaning |
 |---|---|---|
 | `DATABASE_URL` | `postgres://resiliamap:changeme_local_only@localhost:5440/resiliamap` | postgres (porsager) connection string |
-| `API_PORT` | `3010` (compose passes `3801`) | listen port |
+| `API_PORT` | `3801` | listen port (same default everywhere: code, compose, docs) |
 | `NODE_ENV` | `development` | `production` makes CORS fail-safe (see below) |
 | `CORS_ORIGIN` | deny in prod / reflect in dev | comma-separated allowed origins; `*` is **ignored in production** |
 | `API_VERSION` | `0.1.0` | reported by `/api/health` |
@@ -70,7 +70,7 @@ GeoJSON `FeatureCollection`. `bbox` required (4326); `category` optional.
 `400` on missing/invalid bbox or bad category. Capped at 5000 features.
 
 ```bash
-curl 'http://localhost:3010/api/poi?bbox=2.20,48.80,2.45,48.92&category=sante'
+curl 'http://localhost:3801/api/poi?bbox=2.20,48.80,2.45,48.92&category=sante'
 ```
 
 ```json
@@ -107,7 +107,7 @@ curl 'http://localhost:3010/api/poi?bbox=2.20,48.80,2.45,48.92&category=sante'
 Full detail for one POI. `404` if not found, `400` if id is not a positive int.
 
 ```bash
-curl 'http://localhost:3010/api/poi/42'
+curl 'http://localhost:3801/api/poi/42'
 ```
 
 ```json
@@ -141,7 +141,7 @@ curl 'http://localhost:3010/api/poi/42'
 National aggregates for shareable numbers. `category` optional.
 
 ```bash
-curl 'http://localhost:3010/api/stats'
+curl 'http://localhost:3801/api/stats'
 ```
 
 ```json

@@ -10,9 +10,9 @@
 //   GET /api/departments                                      -> DepartmentsResponse
 //   GET /api/health                                           -> Health
 //
-// Base URL: import.meta.env.VITE_API_URL (default http://localhost:3010).
+// Base URL: import.meta.env.VITE_API_URL (default http://localhost:3801).
 // In the compose stack, set VITE_API_URL="/api"-host (nginx proxies). When the
-// base is left as a relative path the Vite dev proxy forwards /api -> :3010.
+// base is left as a relative path the Vite dev proxy forwards /api -> :3801.
 //
 // SRID note: bbox sent in EPSG:4326; geometry received in EPSG:4326. All metric
 // scoring is server-side in EPSG:2154 — the frontend never computes distances.
@@ -31,13 +31,13 @@ import type {
 } from "./types/api";
 
 /**
- * API base URL. Defaults to the api/ default dev port (3010). Trailing slashes
+ * API base URL. Defaults to the api/ default dev port (3801). Trailing slashes
  * are stripped so `${API_BASE}/api/...` is always well formed. A relative value
  * like "" (empty) makes requests same-origin so the Vite dev proxy / nginx can
  * forward them.
  */
 export const API_BASE: string = (
-  import.meta.env.VITE_API_URL ?? "http://localhost:3010"
+  import.meta.env.VITE_API_URL ?? "http://localhost:3801"
 ).replace(/\/+$/, "");
 
 /** Standard error envelope thrown by the client on non-2xx responses. */

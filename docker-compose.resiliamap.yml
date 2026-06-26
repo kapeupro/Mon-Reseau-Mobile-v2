@@ -102,7 +102,9 @@ services:
         # Baked into the static bundle at build time. Empty base => same-origin
         # requests (/api/...), which the web nginx proxies to the api service.
         # (The frontend reads import.meta.env.VITE_API_URL — see web/src/api.ts.)
-        VITE_API_URL: ""
+        # Empty default keeps the nginx same-origin proxy (/api); an operator who
+        # sets VITE_API_URL in .env.resiliamap gets it baked into the bundle.
+        VITE_API_URL: ${VITE_API_URL:-}
     container_name: resiliamap_web
     restart: unless-stopped
     depends_on:

@@ -2,7 +2,7 @@
 // ResiliaMap API — src/index.ts
 // ----------------------------------------------------------------------------
 // Elysia app bootstrap: CORS, route mounting, listen on a configurable PORT
-// (default 3010 to avoid collisions with the Arcep stack on :8000; compose
+// (default 3801 to avoid collisions with the Arcep stack on :8000; compose
 // passes API_PORT=3801 explicitly).
 //
 // Read-only API over the PostGIS resilience schema. Endpoints:
