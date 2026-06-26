@@ -97,6 +97,22 @@ export async function refreshScore(): Promise<void> {
 }
 
 /**
+ * Snapshot today's per-POI scores into score_snapshot (db/v2_features.sql), the
+ * day-over-day history that powers the temporal-reliability sparkline. The SQL
+ * function keys on (captured_date, poi_id) with ON CONFLICT DO UPDATE, so it is
+ * idempotent within a day: safe to call repeatedly, no duplicate rows.
+ *
+ * Call this ONCE per day, AFTER refreshScore(), and ONLY at the daily
+ * orchestration entrypoints (index.ts / pannes cron) — NOT inside refreshScore
+ * itself, which sub-loaders (sites.ts, poi.ts) also invoke mid-run.
+ */
+export async function snapshotScore(): Promise<void> {
+  console.log("[ingest] snapshotting today's scores into score_snapshot …");
+  await sql`SELECT snapshot_resilience_score()`;
+  console.log("[ingest] score_snapshot updated.");
+}
+
+/**
  * Map a free-text operator label (from the outages feed or ANFR CSV) to its
  * MCC-MNC code. The four métropole MNOs only; returns null when unmappable so
  * the caller can keep the row with operator_code = NULL + raw_props for audit

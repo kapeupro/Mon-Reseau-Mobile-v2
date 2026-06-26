@@ -30,7 +30,13 @@
 // License: AGPL-3.0-or-later (ResiliaMap new code). See README.ResiliaMap.md.
 // ============================================================================
 
-import { sql, closeDb, refreshScore, mapOperatorLabelToCode } from "./db.ts";
+import {
+  sql,
+  closeDb,
+  refreshScore,
+  snapshotScore,
+  mapOperatorLabelToCode,
+} from "./db.ts";
 import { pick, jsonParam } from "./pick.ts";
 
 const OUTAGE_BASE_URL =
@@ -314,7 +320,11 @@ export async function runPannes(argv: string[] = process.argv.slice(2)): Promise
   const totalInserted = results.reduce((a, r) => a + r.inserted, 0);
   console.log(`[pannes] done. New outage rows archived: ${totalInserted}.`);
 
-  if (refresh) await refreshScore();
+  if (refresh) {
+    await refreshScore();
+    // Daily cron path (cron_outages.ts): record the day's scores for history.
+    await snapshotScore();
+  }
   return results;
 }
 

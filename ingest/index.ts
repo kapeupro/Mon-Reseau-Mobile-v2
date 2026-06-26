@@ -22,7 +22,7 @@
 // License: AGPL-3.0-or-later (ResiliaMap new code). See README.ResiliaMap.md.
 // ============================================================================
 
-import { closeDb, refreshScore } from "./db.ts";
+import { closeDb, refreshScore, snapshotScore } from "./db.ts";
 import { runSites } from "./sites.ts";
 import { runPoi } from "./poi.ts";
 import { runPannes } from "./pannes.ts";
@@ -44,6 +44,9 @@ async function main(): Promise<void> {
 
   console.log("\n[ingest:all] refreshing score MV …");
   await refreshScore();
+  // Daily history: snapshot the freshly-refreshed scores. This is the canonical
+  // once-per-day call (pannes runs with --no-refresh above, so it won't double).
+  await snapshotScore();
 
   console.log(`\n[ingest:all] DONE in ${((Date.now() - t0) / 1000).toFixed(1)}s.`);
 }
