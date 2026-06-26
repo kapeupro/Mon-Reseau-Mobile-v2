@@ -43,7 +43,17 @@ env: ## Create .env.resiliamap from the example if missing
 	@test -f $(ENV_FILE) || (cp .env.resiliamap.example $(ENV_FILE) && echo "Created $(ENV_FILE) — edit it.")
 
 # --- database ---------------------------------------------------------------
-db-up: ## Start db + tileserv containers
+# NOTE: if the FIRST run fails to pull pramsey/pg_tileserv with
+#   "docker-credential-<helper> executable file not found in $PATH"
+# your ~/.docker/config.json references a credsStore whose helper is missing
+# (common when Docker Desktop was uninstalled but docker/compose come from
+# Homebrew). The images are PUBLIC and need no auth — pull once with a throwaway,
+# empty docker config so the broken helper is never invoked:
+#   mkdir -p /tmp/rm-docker-cfg && printf '{}' > /tmp/rm-docker-cfg/config.json
+#   DOCKER_CONFIG=/tmp/rm-docker-cfg docker pull pramsey/pg_tileserv:latest
+# Then `make db-up` works normally (image is local). Permanent fix: remove the
+# dead "credsStore" key from ~/.docker/config.json (leave "auths": {}).
+db-up: ## Start db + tileserv containers (see note above if the tileserv pull fails)
 	$(COMPOSE) up -d db tileserv
 
 db-down: ## Stop db + tileserv
