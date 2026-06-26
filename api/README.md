@@ -43,10 +43,40 @@ Env vars:
 | `API_PORT` | `3801` | listen port (same default everywhere: code, compose, docs) |
 | `NODE_ENV` | `development` | `production` makes CORS fail-safe (see below) |
 | `CORS_ORIGIN` | deny in prod / reflect in dev | comma-separated allowed origins; `*` is **ignored in production** |
-| `API_VERSION` | `0.1.0` | reported by `/api/health` |
+| `API_VERSION` | `0.1.0` | reported by `/api/health` + OpenAPI `info.version` |
+| `RATE_LIMIT_MAX` | `600` | requests per IP per window |
+| `RATE_LIMIT_WINDOW_S` | `60` | rate-limit window length (seconds) |
 | `R_METERS` / `OUTAGE_WINDOW_DAYS` | `3000` / `90` | display fallback if `score_constants` is unavailable |
 
 In Docker: `docker compose -f docker-compose.resiliamap.yml up -d api`.
+
+## OpenAPI & docs
+
+- **Interactive docs (Scalar UI):** `GET /openapi`
+- **Machine-readable spec:** `GET /openapi/json` (OpenAPI 3.x)
+
+Generated from the live routes via `@elysiajs/openapi`. The hand-rolled validators
+in `src/schema.ts` remain the authoritative request gate; the spec documents the
+contract without imposing a second (drift-prone) validation layer.
+
+## Rate limits
+
+Per-IP fixed-window limiter (in-memory). Defaults: **600 requests / 60 s** (~10 req/s),
+tunable via `RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW_S`.
+
+- Every response carries `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`.
+- On overflow: `429` + `Retry-After`.
+- **Exempt:** `/api/health` and `/openapi*` (monitoring + docs stay reachable under load).
+- Single-instance only: the counter is per-process. Horizontal scaling needs a shared
+  store (e.g. Redis) — out of scope today.
+
+## Status
+
+`GET /api/health` is the service-status contract: `200` with `status:"ok"` when the DB
+is reachable, `503` with `status:"degraded"` otherwise. `db` is `true` only when the
+liveness ping AND the follow-up metadata query both succeed. Fields: `mv_resilience_score`
+(rows + last_refresh), `outages` (latest_observed_date + days_in_archive),
+`coverage_layer_loaded`, `version`.
 
 ## Endpoints
 

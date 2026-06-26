@@ -16,10 +16,12 @@
 // ============================================================================
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
+import { openapi } from "@elysiajs/openapi";
 import { healthRoutes } from "./routes/health.ts";
 import { poiRoutes } from "./routes/poi.ts";
 import { statsRoutes } from "./routes/stats.ts";
 import { departmentsRoutes } from "./routes/departments.ts";
+import { rateLimit } from "./ratelimit.ts";
 import { closeDb } from "./db.ts";
 import { API_PORT, API_VERSION, ARCEP_DISCLAIMER } from "./constants.ts";
 
@@ -55,6 +57,30 @@ const app = new Elysia()
       methods: ["GET", "OPTIONS"],
     })
   )
+  // Per-IP rate limit (429 + RateLimit-* headers). Mounted early so it guards
+  // every route; /api/health and /openapi* are exempt (see ratelimit.ts).
+  .use(rateLimit)
+  // OpenAPI: Scalar UI at /openapi, machine-readable spec at /openapi.json.
+  // MUST be mounted before the route groups so their paths are captured.
+  .use(
+    openapi({
+      documentation: {
+        info: {
+          title: "ResiliaMap API",
+          version: API_VERSION,
+          description: ARCEP_DISCLAIMER,
+          license: { name: "AGPL-3.0-or-later" },
+        },
+        tags: [
+          { name: "poi", description: "Critical POI + resilience score" },
+          { name: "stats", description: "National aggregates" },
+          { name: "departments", description: "Per-département resilience" },
+          { name: "health", description: "Liveness / service status" },
+        ],
+        servers: [{ url: "/" }],
+      },
+    })
+  )
   // Tiny self-describing index so a bare GET / is useful (and not a 404).
   .get("/", () => ({
     name: "ResiliaMap API",
@@ -67,7 +93,15 @@ const app = new Elysia()
       "GET /api/poi/:id",
       "GET /api/stats?category=sante|securite",
       "GET /api/departments",
+      "GET /openapi",
+      "GET /openapi/json",
     ],
+    limits: {
+      per_ip: `${process.env.RATE_LIMIT_MAX ?? 600} requests / ${process.env.RATE_LIMIT_WINDOW_S ?? 60}s`,
+      on_exceed: "HTTP 429 + Retry-After; RateLimit-* headers on every response",
+      exempt: ["/api/health", "/openapi"],
+    },
+    docs: "/openapi",
     disclaimer: ARCEP_DISCLAIMER,
   }))
   .use(healthRoutes)
