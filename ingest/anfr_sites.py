@@ -8,7 +8,8 @@
 # Why Python (not the Bun ingest): ANFR ships a multi-table ZIP (SUP_SUPPORT,
 # SUP_STATION, SUP_EMETTEUR, …, hundreds of MB unzipped), not a flat CSV. This
 # streams the big emitter file and joins in memory — trivial in Python, awkward
-# in Bun. Output is a clean CSV (operator_code, source_site_id, lon, lat WGS84)
+# in Bun. Output CSV columns: operator_code, source_site_id, lon, lat (WGS84),
+# first_4g_date (oldest LTE in-service date, >=2010), bands (e.g. 700/800/1800)
 # that loads straight into network_site (see Makefile target `sites-anfr`).
 #
 # Join (VERIFIED 2026-06-25 on the 2026-05-31 export):
@@ -32,6 +33,7 @@
 import csv
 import io
 import os
+import re
 import sys
 import urllib.request
 import zipfile
@@ -99,9 +101,34 @@ def main() -> None:
     zpath = get_zip(zip_arg)
     zf = zipfile.ZipFile(zpath)
 
-    # 1) stations with at least one LTE (4G) emitter
+    # 1) stations with >=1 LTE (4G) emitter, plus per-station 4G age + bands.
+    #    EMR_LB_SYSTEME e.g. "LTE 800"; EMR_DT_SERVICE = DD/MM/YYYY (the 4G
+    #    activation date). A date < 2010 is a re-farmed band that kept a legacy
+    #    2G/3G date -> dropped so the "4G age" stays truthful.
+    band_re = re.compile(r"LTE\s+(\d{3,4})")
+
+    def _iso(d):
+        d = (d or "").strip()
+        m = re.match(r"^(\d{2})/(\d{2})/(\d{4})$", d)
+        return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
+
     g = rows(zf, "SUP_EMETTEUR.txt"); next(g)
-    sta_4g = {f[2] for f in g if len(f) > 2 and "LTE" in f[1]}
+    sta_4g = {}  # STA -> {"bands": set, "first": "YYYY-MM-DD" | None}
+    for f in g:
+        if len(f) < 5 or "LTE" not in f[1]:
+            continue
+        m = band_re.search(f[1])
+        if not m:
+            continue
+        d = _iso(f[4])
+        if d and d < "2010-01-01":
+            d = None
+        rec = sta_4g.get(f[2])
+        if rec is None:
+            rec = sta_4g[f[2]] = {"bands": set(), "first": None}
+        rec["bands"].add(m.group(1))
+        if d and (rec["first"] is None or d < rec["first"]):
+            rec["first"] = d
     print(f"[anfr] 4G (LTE) stations: {len(sta_4g):,}", file=sys.stderr)
 
     # 2) station -> operator code (only the 4 métropole MNOs)
@@ -134,7 +161,9 @@ def main() -> None:
             if not (-5.5 < lon < 9.8 and 41.0 < lat < 51.5):
                 continue
             seen.add(key)
-            w.writerow([op, sta, f"{lon:.6f}", f"{lat:.6f}"])
+            meta = sta_4g[sta]
+            bands = "/".join(sorted(meta["bands"], key=int))
+            w.writerow([op, sta, f"{lon:.6f}", f"{lat:.6f}", meta["first"] or "", bands])
             emitted += 1
 
     print(f"[anfr] wrote {emitted:,} 4G MNO sites -> {OUT}", file=sys.stderr)

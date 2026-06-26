@@ -280,17 +280,33 @@ export const poiRoutes = new Elysia()
 
       // 2) Serving operators: distinct operators with an ACTIVE 4G site within R.
       //    All distance math in 2154 metres (ST_DWithin + ST_Distance).
+      // since_year = oldest 4G in-service year among that operator's nearby sites
+      // (ANFR EMR_DT_SERVICE). bands = the LTE bands deployed nearby (ANFR), a
+      // correlated subquery so the row-count is not multiplied by the unnest.
       const servingRows = await sql<
         {
           operator_code: number;
           n_sites_within_r: number;
           nearest_site_m: number;
+          since_year: number | null;
+          bands: string | null;
         }[]
       >`
         SELECT
           s.operator_code,
           count(*)::int                                  AS n_sites_within_r,
-          round(min(ST_Distance(p.geom, s.geom)))::int   AS nearest_site_m
+          round(min(ST_Distance(p.geom, s.geom)))::int   AS nearest_site_m,
+          EXTRACT(YEAR FROM min(s.first_4g_date))::int    AS since_year,
+          (
+            SELECT array_to_string(array_agg(DISTINCT band::int ORDER BY band::int), '/')
+            FROM critical_poi p2
+            JOIN network_site s2
+              ON s2.has_4g AND s2.is_active
+             AND s2.operator_code = s.operator_code
+             AND ST_DWithin(p2.geom, s2.geom, ${rMeters})
+            CROSS JOIN LATERAL unnest(string_to_array(s2.bands, '/')) AS band
+            WHERE p2.id = ${id} AND band ~ '^[0-9]+$'
+          )                                              AS bands
         FROM critical_poi p
         JOIN network_site s
           ON s.has_4g
@@ -309,6 +325,8 @@ export const poiRoutes = new Elysia()
           color: operatorColor(code),
           n_sites_within_R: Number(r.n_sites_within_r),
           nearest_site_m: Number(r.nearest_site_m),
+          since_year: r.since_year == null ? null : Number(r.since_year),
+          bands: r.bands && r.bands.length > 0 ? r.bands : null,
         };
       });
 

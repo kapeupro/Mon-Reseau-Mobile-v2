@@ -80,6 +80,10 @@ export interface ServingOperator {
   color: string;
   n_sites_within_R: number;
   nearest_site_m: number;
+  /** Oldest 4G in-service year among this operator's nearby sites (ANFR). */
+  since_year: number | null;
+  /** LTE bands deployed nearby, e.g. "700/800/1800/2100/2600" (ANFR). */
+  bands: string | null;
 }
 
 export interface NearbyOutage {

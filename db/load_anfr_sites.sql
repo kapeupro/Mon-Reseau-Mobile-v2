@@ -15,16 +15,20 @@ CREATE TEMP TABLE stg_anfr (
     operator_code  bigint,
     source_site_id text,
     lon            double precision,
-    lat            double precision
+    lat            double precision,
+    first_4g_date  date,
+    bands          text
 );
 
-\copy stg_anfr FROM 'ingest/data/raw/network_sites.csv' WITH (FORMAT csv)
+\copy stg_anfr FROM 'ingest/data/raw/network_sites.csv' WITH (FORMAT csv, NULL '')
 
-INSERT INTO network_site (source_site_id, operator_code, has_4g, is_active, geom)
+INSERT INTO network_site (source_site_id, operator_code, has_4g, is_active, geom, first_4g_date, bands)
 SELECT source_site_id, operator_code, true, true,
-       ST_Transform(ST_SetSRID(ST_MakePoint(lon, lat), 4326), 2154)
+       ST_Transform(ST_SetSRID(ST_MakePoint(lon, lat), 4326), 2154),
+       first_4g_date, bands
 FROM stg_anfr
 ON CONFLICT (operator_code, COALESCE(source_site_id, '')) DO UPDATE
-  SET has_4g = true, is_active = true, geom = EXCLUDED.geom;
+  SET has_4g = true, is_active = true, geom = EXCLUDED.geom,
+      first_4g_date = EXCLUDED.first_4g_date, bands = EXCLUDED.bands;
 
 DROP TABLE stg_anfr;

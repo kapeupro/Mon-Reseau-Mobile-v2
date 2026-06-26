@@ -22,3 +22,7 @@ ingest/data/raw/*
 # Logs / OS noise
 *.log
 .DS_Store
+
+# Python bytecode (ingest helper scripts)
+__pycache__/
+*.pyc

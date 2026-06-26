@@ -467,9 +467,28 @@ body {
 }
 .ops__item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   font-size: 13.5px;
+}
+.ops__item .ops__dot { margin-top: 4px; }
+.ops__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ops__line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.ops__sub {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 11.5px;
+  color: var(--slate-500);
+  font-variant-numeric: tabular-nums;
 }
 .ops__dot,
 .outages__dot {

@@ -219,10 +219,20 @@ export default function PoiPanel({ id, onClose }: Props) {
                       className="ops__dot"
                       style={{ background: operatorColor(op.code) }}
                     />
-                    <span className="ops__name">{op.name}</span>
-                    <span className="ops__meta">
-                      {op.n_sites_within_R} site{op.n_sites_within_R > 1 ? "s" : ""} ·
-                      le + proche {op.nearest_site_m} m
+                    <span className="ops__body">
+                      <span className="ops__line">
+                        <span className="ops__name">{op.name}</span>
+                        <span className="ops__meta">
+                          {op.n_sites_within_R} site{op.n_sites_within_R > 1 ? "s" : ""} ·
+                          le + proche {op.nearest_site_m} m
+                        </span>
+                      </span>
+                      {(op.since_year || op.bands) && (
+                        <span className="ops__sub">
+                          {op.since_year ? `4G depuis ${op.since_year}` : "4G"}
+                          {op.bands ? ` · ${op.bands} MHz` : ""}
+                        </span>
+                      )}
                     </span>
                   </li>
                 ))}

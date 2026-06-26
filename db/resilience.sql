@@ -85,6 +85,8 @@ CREATE TABLE IF NOT EXISTS network_site (
     has_4g         boolean NOT NULL DEFAULT true, -- from site_4g; only 4G counts for redundancy
     is_active      boolean NOT NULL DEFAULT true, -- outage status is separate (site_outage)
     geom           geometry(Point, 2154) NOT NULL,-- reprojected 3857->2154 or 4326->2154
+    first_4g_date  date,                          -- oldest LTE in-service date (ANFR EMR_DT_SERVICE, floored to >=2010)
+    bands          text,                          -- LTE bands deployed, e.g. "700/800/1800/2100/2600" (ANFR)
     loaded_at      timestamptz NOT NULL DEFAULT now()
 );
 
