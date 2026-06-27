@@ -17,11 +17,107 @@
 // License: AGPL-3.0-or-later (ResiliaMap new code). See README.ResiliaMap.md.
 // ============================================================================
 import { createHmac } from "node:crypto";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 import { sql } from "./db.ts";
 
 /** Stop retrying a webhook after this many failed attempts (avoids runaway). */
 const MAX_ATTEMPTS = Number(process.env.ALERT_MAX_ATTEMPTS ?? 5);
 const GLOBAL_SECRET = process.env.WEBHOOK_SIGNING_SECRET ?? "";
+/** Max redirect hops to follow, re-validating each (avoids redirect-based SSRF). */
+const MAX_REDIRECTS = 3;
+/** Dev/test escape hatch: allow private/loopback webhook targets when explicitly set. */
+const ALLOW_PRIVATE = process.env.ALERT_WEBHOOK_ALLOW_PRIVATE === "true";
+
+// ----------------------------------------------------------------------------
+// SSRF defense. A webhook target is attacker-influenced (it will be user-supplied
+// once the public subscribe API lands), so before EVERY hop we require http(s),
+// resolve the host, and reject any address that lands on loopback / link-local /
+// private / CGNAT / cloud-metadata ranges — the classic SSRF pivot targets.
+// ----------------------------------------------------------------------------
+
+/** True if an IPv4 dotted address is in a blocked (private/loopback/meta) range. */
+function ipv4Blocked(ip: string): boolean {
+  const p = ip.split(".").map(Number);
+  if (p.length !== 4 || p.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) {
+    return true; // malformed -> block
+  }
+  const [a, b] = p as [number, number, number, number];
+  if (a === 0 || a === 10 || a === 127) return true;     // this-net, private, loopback
+  if (a === 169 && b === 254) return true;               // link-local + 169.254.169.254 metadata
+  if (a === 172 && b >= 16 && b <= 31) return true;      // private
+  if (a === 192 && b === 168) return true;               // private
+  if (a === 100 && b >= 64 && b <= 127) return true;     // CGNAT 100.64/10
+  return false;
+}
+
+/** True if an IPv6 address is in a blocked range (loopback/ULA/link-local/mapped). */
+function ipv6Blocked(ip: string): boolean {
+  const s = ip.toLowerCase().split("%")[0]!; // drop any zone id
+  if (s === "::1" || s === "::") return true;            // loopback / unspecified
+  const mapped = s.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/); // IPv4-mapped
+  if (mapped) return ipv4Blocked(mapped[1]!);
+  if (s.startsWith("fc") || s.startsWith("fd")) return true; // ULA fc00::/7
+  if (/^fe[89ab]/.test(s)) return true;                  // link-local fe80::/10
+  return false;
+}
+
+function addressBlocked(ip: string): boolean {
+  const fam = isIP(ip);
+  return fam === 6 ? ipv6Blocked(ip) : ipv4Blocked(ip);
+}
+
+/**
+ * Validate a webhook URL against SSRF: http(s) only, and EVERY resolved address
+ * must be public. Throws on rejection. Returns the validated URL string.
+ */
+async function assertSafeWebhookUrl(raw: string): Promise<void> {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error(`invalid webhook URL`);
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error(`blocked scheme ${url.protocol}`);
+  }
+  if (ALLOW_PRIVATE) return; // explicit dev/test opt-in
+  const host = url.hostname.replace(/^\[|\]$/g, ""); // strip IPv6 brackets
+  // Resolve ALL addresses (a host may have several A/AAAA records); reject if any
+  // is private — defends against DNS rebinding to a single bad record.
+  const results = isIP(host)
+    ? [{ address: host }]
+    : await lookup(host, { all: true });
+  if (results.length === 0) throw new Error(`host did not resolve`);
+  for (const r of results) {
+    if (addressBlocked(r.address)) {
+      throw new Error(`blocked private/loopback target ${r.address}`);
+    }
+  }
+}
+
+/**
+ * fetch() with SSRF-safe redirect handling: manual redirects, re-validating the
+ * Location host at every hop so a public URL can't 30x-bounce to an internal one.
+ */
+async function safeFetch(
+  target: string,
+  init: RequestInit,
+): Promise<Response> {
+  let current = target;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    await assertSafeWebhookUrl(current);
+    const res = await fetch(current, { ...init, redirect: "manual" });
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get("location");
+      if (!loc) return res;
+      current = new URL(loc, current).toString(); // resolve relative, re-validate next loop
+      continue;
+    }
+    return res;
+  }
+  throw new Error(`too many redirects (> ${MAX_REDIRECTS})`);
+}
 
 interface PendingEvent {
   id: number;
@@ -76,7 +172,8 @@ export async function deliverAlerts(): Promise<DeliverResult> {
         const sig = createHmac("sha256", secret).update(body).digest("hex");
         headers["X-ResiliaMap-Signature"] = `sha256=${sig}`;
       }
-      const res = await fetch(ev.target, { method: "POST", headers, body });
+      // SSRF-safe: validates scheme + resolved IP (and every redirect hop).
+      const res = await safeFetch(ev.target, { method: "POST", headers, body });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       await sql`
