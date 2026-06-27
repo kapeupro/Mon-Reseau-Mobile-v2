@@ -1,0 +1,36 @@
+# ============================================================================
+# ResiliaMap — Caddyfile (production TLS front)
+# ----------------------------------------------------------------------------
+# Caddy terminates TLS (automatic Let's Encrypt certs), redirects HTTP->HTTPS,
+# and reverse-proxies everything to the web container, whose nginx serves the
+# SPA and proxies /api + /tiles same-origin. So the browser only ever talks to
+# one origin — which is exactly why the API's fail-safe CORS (deny cross-origin
+# in production) and per-IP rate limit (keyed on the forwarded client IP) work.
+#
+# {$DOMAIN} and {$ACME_EMAIL} come from .env.prod via the caddy service env.
+# License: AGPL-3.0-or-later. See DEPLOY.ResiliaMap.md.
+# ============================================================================
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode gzip zstd
+
+	# Forward the real client IP so the API rate limiter keys on it.
+	reverse_proxy web:80 {
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# Baseline security headers (the app is read-only public data).
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

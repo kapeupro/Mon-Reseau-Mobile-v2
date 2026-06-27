@@ -1,0 +1,47 @@
+# ============================================================================
+# ResiliaMap web — nginx.conf.template
+# ----------------------------------------------------------------------------
+# Serves the built SPA and reverse-proxies the API + vector tiles so the browser
+# only ever talks to a single origin (no CORS, no hardcoded API host).
+#
+# ${API_UPSTREAM} / ${TILESERV_UPSTREAM} are substituted by the nginx image's
+# envsubst entrypoint from the container environment (set in compose). nginx
+# runtime vars like $host / $uri are NOT env vars and are left untouched.
+#
+# License: AGPL-3.0-or-later. See README.ResiliaMap.md.
+# ============================================================================
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Docker's embedded DNS. Used WITH a variable in proxy_pass so nginx resolves
+    # upstreams at REQUEST time, not config-load time: the web container then
+    # starts even if api/tileserv are not up yet, and tolerates their restarts,
+    # instead of failing hard with "host not found in upstream".
+    resolver 127.0.0.11 valid=10s ipv6=off;
+
+    # Read-only ResiliaMap API (Bun + Elysia). Routes are mounted under /api/*.
+    location /api/ {
+        set $api_upstream ${API_UPSTREAM};
+        proxy_pass http://$api_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Vector tiles (pg_tileserv). rewrite strips the /tiles prefix before proxy.
+    location /tiles/ {
+        set $tiles_upstream ${TILESERV_UPSTREAM};
+        rewrite ^/tiles/(.*)$ /$1 break;
+        proxy_pass http://$tiles_upstream;
+        proxy_set_header Host $host;
+    }
+
+    # SPA fallback: every other path serves index.html (client-side routing).
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

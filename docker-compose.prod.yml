@@ -1,0 +1,95 @@
+# ============================================================================
+# ResiliaMap — docker-compose.prod.yml  (PRODUCTION OVERRIDE)
+# ----------------------------------------------------------------------------
+# Layer on top of the base file. Use TOGETHER, never alone:
+#
+#   docker compose -f docker-compose.resiliamap.yml -f docker-compose.prod.yml \
+#     --env-file .env.prod up -d --build
+#
+# What this override changes vs dev:
+#   * SECRETS ARE REQUIRED — `${VAR:?...}` makes compose fail fast if a secret is
+#     unset, so production never silently boots with the dev `changeme` defaults.
+#   * NO PUBLISHED PORTS for db / tileserv / api / web — they are reachable only
+#     on the internal network. The ONLY public entrypoint is Caddy (80/443),
+#     which terminates TLS and reverse-proxies to the web container (whose nginx
+#     already serves the SPA + same-origin /api and /tiles).
+#   * LEAST PRIVILEGE — api + tileserv connect as the read-only role
+#     (db/30_roles.sql); only ingest/migrations use the owner role.
+#   * NODE_ENV=production -> CORS denies cross-origin (everything is same-origin
+#     through Caddy -> web nginx), the fail-safe path from B1.
+#
+# Requires Docker Compose v2.24+ (for the `!override` merge tag).
+# License: AGPL-3.0-or-later. See README.ResiliaMap.md + DEPLOY.ResiliaMap.md.
+# ============================================================================
+
+services:
+  db:
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env.prod}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a strong POSTGRES_PASSWORD in .env.prod}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env.prod}
+    # Internal only — the DB is never exposed to the host/internet in prod.
+    ports: !override []
+
+  tileserv:
+    environment:
+      # Read-only role (set TILESERV_DATABASE_URL in .env.prod to the RO user).
+      DATABASE_URL: ${TILESERV_DATABASE_URL:?set TILESERV_DATABASE_URL (read-only role) in .env.prod}
+    ports: !override []
+
+  api:
+    environment:
+      # API is read-only -> connect as the RO role, not the owner.
+      DATABASE_URL: ${API_DATABASE_URL:?set API_DATABASE_URL (read-only role) in .env.prod}
+      API_PORT: ${API_PORT:-3801}
+      NODE_ENV: production
+      # Empty => deny cross-origin (the browser reaches /api same-origin via Caddy
+      # -> web nginx). Only set CORS_ORIGIN if a separate front-end origin needs it.
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      WEBHOOK_SIGNING_SECRET: ${WEBHOOK_SIGNING_SECRET:-}
+    ports: !override []
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        # Empty => same-origin bundle (/api), proxied by web nginx. The optional
+        # licensed basemap style is baked in at build time.
+        VITE_API_URL: ""
+        VITE_BASEMAP_STYLE_URL: ${VITE_BASEMAP_STYLE_URL:-}
+    # Fronted by Caddy; not published to the host directly.
+    ports: !override []
+
+  ingest:
+    environment:
+      # Ingest + migrations use the OWNER role (it writes + REFRESHes the MV).
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL (owner role) in .env.prod}
+      WEBHOOK_SIGNING_SECRET: ${WEBHOOK_SIGNING_SECRET:-}
+      # ALERT_WEBHOOK_ALLOW_PRIVATE stays false in prod (SSRF guard on).
+
+  # Public entrypoint: TLS termination + HTTP->HTTPS + reverse proxy to web nginx.
+  caddy:
+    image: caddy:2-alpine
+    container_name: resiliamap_caddy
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN (e.g. resiliamap.fr) in .env.prod}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL for Let's Encrypt in .env.prod}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - resiliamap_net
+
+volumes:
+  caddy_data:
+    name: resiliamap_caddy_data
+  caddy_config:
+    name: resiliamap_caddy_config

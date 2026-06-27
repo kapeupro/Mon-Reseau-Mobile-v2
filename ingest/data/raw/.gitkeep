@@ -1,0 +1,2 @@
+# Keeps ingest/data/raw/ present in git. Downloaded raw files here are gitignored
+# (see .gitignore.resiliamap). Drop the optional couverture_theorique .gpkg here.
