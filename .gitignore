@@ -10,6 +10,7 @@ dist/
 .env
 .env.local
 .env.resiliamap
+.env.prod
 **/.env
 
 # Ingestion working data (downloaded source files are reproducible)

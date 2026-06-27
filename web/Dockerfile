@@ -17,6 +17,10 @@ RUN bun install --frozen-lockfile
 COPY . .
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
+# Optional licensed/self-hosted basemap style for production (D2). Empty -> the
+# key-free OSM raster fallback (dev only).
+ARG VITE_BASEMAP_STYLE_URL=""
+ENV VITE_BASEMAP_STYLE_URL=$VITE_BASEMAP_STYLE_URL
 RUN bun run build
 
 FROM nginx:1.27-alpine
