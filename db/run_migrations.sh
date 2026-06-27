@@ -31,7 +31,7 @@ echo "ResiliaMap: applying schema to ${DB_URL%%@*}@<redacted>"
 # drop/recreate of mv_resilience_score + v_poi_tiles in resilience.sql).
 # All are idempotent, so re-running this script is safe.
 shopt -s nullglob
-for f in "${SCRIPT_DIR}"/00_extensions.sql "${SCRIPT_DIR}"/resilience.sql "${SCRIPT_DIR}"/v2_features.sql "${SCRIPT_DIR}"/30_roles.sql "${SCRIPT_DIR}"/data_quality.sql; do
+for f in "${SCRIPT_DIR}"/00_extensions.sql "${SCRIPT_DIR}"/resilience.sql "${SCRIPT_DIR}"/v2_features.sql "${SCRIPT_DIR}"/30_roles.sql "${SCRIPT_DIR}"/data_quality.sql "${SCRIPT_DIR}"/alerts.sql; do
   echo ">> psql -f ${f}"
   psql "${DB_URL}" -v ON_ERROR_STOP=1 -f "${f}"
 done

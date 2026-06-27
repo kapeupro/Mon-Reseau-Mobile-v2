@@ -24,6 +24,8 @@
 
 import { closeDb, refreshScore, snapshotScore, recordIngestRun } from "./db.ts";
 import { getPickWarnings, resetPickWarnings } from "./pick.ts";
+import { evaluateAlerts } from "./alerts.ts";
+import { deliverAlerts } from "./deliver.ts";
 import { runSites } from "./sites.ts";
 import { runPoi } from "./poi.ts";
 import { runPannes } from "./pannes.ts";
@@ -110,6 +112,15 @@ async function main(): Promise<void> {
   // Daily history: snapshot the freshly-refreshed scores. This is the canonical
   // once-per-day call (pannes runs with --no-refresh above, so it won't double).
   await snapshotScore();
+
+  // E3 alerts: evaluate (vs the fresh MV + yesterday's snapshot + today's
+  // outages) then deliver. Wrapped so an alert failure never fails the ingest.
+  try {
+    await evaluateAlerts();
+    await deliverAlerts();
+  } catch (err) {
+    console.error("[ingest:all] WARN: alerts step failed (ingest unaffected):", err);
+  }
 
   // One summary row for the whole run. finished_at here is the canonical "last
   // successful full ingest" timestamp that /api/health reads for MV freshness.

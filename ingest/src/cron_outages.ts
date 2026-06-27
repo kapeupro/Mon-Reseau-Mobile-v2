@@ -20,6 +20,8 @@
 
 import { closeDb, recordIngestRun } from "../db.ts";
 import { getPickWarnings, resetPickWarnings } from "../pick.ts";
+import { evaluateAlerts } from "../alerts.ts";
+import { deliverAlerts } from "../deliver.ts";
 import { runPannes } from "../pannes.ts";
 
 // Forward any CLI args (e.g. --date) straight through to the pannes loader.
@@ -30,6 +32,16 @@ runPannes(process.argv.slice(2))
   .then(async (results) => {
     const hadError = results.some((r) => r.status === "error");
     const hadMissing = results.some((r) => r.status === "missing");
+
+    // E3 alerts: runPannes already refreshed the MV + snapshotted today's scores,
+    // so the baseline is ready. Wrapped so an alert failure never fails the cron.
+    try {
+      await evaluateAlerts();
+      await deliverAlerts();
+    } catch (err) {
+      console.error("[cron_outages] WARN: alerts step failed (cron unaffected):", err);
+    }
+
     // Persist this cron run so the data-quality dashboard sees daily fetches —
     // including a 404/error today even when older archived days look fine.
     await recordIngestRun({

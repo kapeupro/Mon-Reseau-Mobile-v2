@@ -49,6 +49,8 @@ services:
       - ./db/30_roles.sql:/docker-entrypoint-initdb.d/30_roles.sql:ro
       # E4 data-quality run log (ingest_run). 40_ runs after the RO role exists.
       - ./db/data_quality.sql:/docker-entrypoint-initdb.d/40_data_quality.sql:ro
+      # E3 alerts (alert_subscription, alert_event). 50_ after critical_poi exists.
+      - ./db/alerts.sql:/docker-entrypoint-initdb.d/50_alerts.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resiliamap} -d ${POSTGRES_DB:-resiliamap}"]
       interval: 10s

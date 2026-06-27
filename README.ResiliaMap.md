@@ -253,6 +253,34 @@ until calibrated on a **pilot department** (urban density strongly affects `R`).
 
 ---
 
+## Alerts (E3)
+
+Subscribe to a critical POI and get notified when its score crosses **below a
+threshold**, **degrades vs yesterday** by ≥ `degradation_delta`, or a **new outage**
+appears within `R_METERS`. Evaluation + delivery run inside the daily pipeline
+(`ingest/index.ts` and `cron_outages.ts`) right after the MV refresh + score
+snapshot — so the day-over-day baseline (`score_snapshot`, populated by A1) is
+ready. Schema: `db/alerts.sql` (`alert_subscription`, `alert_event`; a UNIQUE on
+`(subscription, kind, day)` dedups to one fire per POI per day).
+
+**Webhook delivery** posts the JSON payload with an HMAC-SHA256 signature
+(`X-ResiliaMap-Signature: sha256=<hex>`, secret from `signing_secret` or
+`WEBHOOK_SIGNING_SECRET`). Until the public subscribe API lands, create a webhook
+subscription by SQL:
+
+```sql
+INSERT INTO alert_subscription (poi_id, channel, target, notify_degradation, confirmed, signing_secret)
+VALUES (42, 'webhook', 'https://example.org/hook', true, true, 'your-secret');
+```
+
+**Deferred (needs a decision):** email delivery (no SMTP provider configured —
+email subs are evaluated + queued, not sent) and the public `POST /api/alerts`
+subscribe endpoint with double opt-in (a write path on the otherwise read-only
+API). Every payload carries the Arcep disclaimer — the score is an uncalibrated
+indicator, not an official reliability guarantee.
+
+---
+
 ## Operators (PK = MCC-MNC)
 
 Colors are taken **exactly** from `back_mrm/data/operateurs.json` (verified).
